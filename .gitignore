@@ -14,3 +14,10 @@
 compile_commands.json
 .clangd/
 .cache/
+
+# Container-local HOME. `qmk config` writes here; it must not be the host's
+# config, because user.qmk_home in a config file beats the QMK_HOME variable.
+.qmk-home/
+
+# direnv machine-specific overrides
+.envrc.local

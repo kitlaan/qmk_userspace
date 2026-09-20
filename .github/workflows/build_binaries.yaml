@@ -9,9 +9,10 @@ jobs:
   build:
     name: 'QMK Userspace Build'
     uses: qmk/.github/.github/workflows/qmk_userspace_build.yml@main
-    with:
-      qmk_repo: qmk/qmk_firmware
-      qmk_ref: master
+    # NOTE: Using submodule to pin the version
+    #with:
+    #  qmk_repo: qmk/qmk_firmware
+    #  qmk_ref: master
 
   publish:
     name: 'QMK Userspace Publish'

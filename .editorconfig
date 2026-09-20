@@ -24,9 +24,5 @@ max_line_length = 200
 end_of_line = lf
 indent_style = tab
 
-[Makefile]
-end_of_line = lf
-indent_style = tab
-
 [*.sh]
 end_of_line = lf

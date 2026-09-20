@@ -1,0 +1,73 @@
+#!/bin/bash
+# Runs the QMK CLI in a container, so `qmk ...` works with no host install.
+# Assumes bash 4.4 or later and GNU coreutils. This script targets Linux only.
+set -euo pipefail
+
+_self="$(readlink -f -- "${BASH_SOURCE[0]}")"
+# shellcheck source=../qmk-env.sh
+. "$(dirname -- "$_self")/../qmk-env.sh"
+
+# A submodule's .git is a file that holds a relative pointer
+# (`gitdir: ../.git/modules/qmk_firmware`). Mounting the submodule at its own
+# path breaks that pointer, and breaks firmware's own nested submodules. Mount
+# only the userspace tree and let QMK_HOME point inside it, as CI does.
+mounts=(-v "$QMK_USERSPACE_ROOT:/qmk_userspace:z")
+if [[ $QMK_FW_MODE == submodule ]]; then
+    fw_in=/qmk_userspace/qmk_firmware
+else
+    fw_in=/qmk_firmware
+    mounts+=(-v "$QMK_FW_ROOT:/qmk_firmware:z")
+fi
+
+# milc records ORIG_CWD before it changes directory to the firmware root, and
+# find_keymap_from_dir() reads ORIG_CWD to infer -kb and -km. Map the real
+# directory so that inference works as it does natively. Test the firmware root
+# first: in submodule mode it sits under the userspace root, so every firmware
+# path also matches the userspace prefix.
+#
+# Match on the physical path. qmk-env.sh resolves QMK_USERSPACE_ROOT and
+# QMK_FW_ROOT with `cd && pwd`, which is physical, but $PWD can be logical
+# when the caller reaches the repo through a symlink. That mismatch would
+# make both case arms miss and silently fall back to /qmk_userspace.
+pwd_phys=$(pwd -P)
+# In external mode, a cwd inside the in-tree qmk_firmware still matches the
+# userspace arm below (it sits under $QMK_USERSPACE_ROOT), so -w lands inside
+# the in-tree submodule while QMK_HOME points at the external $QMK_FW_ROOT.
+# The off-pin warning then names firmware that has nothing to do with -w.
+# Known quirk of cwd-based inference; not fixed here.
+case $pwd_phys/ in
+    "$QMK_FW_ROOT"/*)        workdir=$fw_in${pwd_phys#"$QMK_FW_ROOT"} ;;
+    "$QMK_USERSPACE_ROOT"/*) workdir=/qmk_userspace${pwd_phys#"$QMK_USERSPACE_ROOT"} ;;
+    *)                       workdir=/qmk_userspace ;;
+esac
+
+# `qmk config` writes to $HOME/.config/qmk. Under --user the default HOME is `/`
+# and the write fails with PermissionError. Point HOME at a writable directory
+# instead; see .gitignore for why it is not the host's own qmk config.
+mkdir -p "$QMK_USERSPACE_ROOT/.qmk-home"
+
+# `docker run -t` fails with "the input device is not a TTY" in a pipe.
+tty_args=(-i)
+if [[ -t 0 && -t 1 ]]; then
+    tty_args+=(-t)
+fi
+
+# Flashing needs the bootloader device node, and that node appears only after
+# the board resets. A bind mount shows the new node, but the device cgroup
+# refuses access to it without --privileged.
+usb_args=()
+if [[ -z ${SKIP_FLASHING_SUPPORT-} ]]; then
+    usb_args=(--privileged -v /dev:/dev)
+fi
+
+exec docker run --rm \
+    "${tty_args[@]}" \
+    "${usb_args[@]}" \
+    "${mounts[@]}" \
+    --user "$(id -u):$(id -g)" \
+    -w "$workdir" \
+    -e HOME=/qmk_userspace/.qmk-home \
+    -e QMK_HOME="$fw_in" \
+    -e QMK_USERSPACE=/qmk_userspace \
+    "${QMK_IMAGE:-ghcr.io/qmk/qmk_cli:latest}" \
+    qmk "$@"

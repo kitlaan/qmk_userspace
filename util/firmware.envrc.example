@@ -1,0 +1,26 @@
+# Copy this to qmk_firmware/.envrc, then run `direnv allow` there.
+# It assumes qmk_firmware and qmk_userspace are sibling directories.
+#
+# qmk_firmware gitignores .envrc, so this copy cannot be tracked anywhere. The
+# example lives here instead.
+
+# Resolve the sibling before export. An unresolved `cd` would otherwise export
+# QMK_USERSPACE as an empty string, which QMK treats as "set but useless" and
+# silently builds no keymaps, instead of "unset".
+_userspace=$(cd -- "$PWD/../qmk_userspace" 2>/dev/null && pwd) || _userspace=
+if [ -z "$_userspace" ]; then
+    echo "error: no qmk_userspace sibling found. this file assumes qmk_firmware and qmk_userspace sit side by side." >&2
+else
+    export QMK_USERSPACE="$_userspace"
+
+    # Builds started from here use this clone, not the SHA the userspace submodule
+    # pins, and common_rules.mk copies output into the userspace root. Warn, so an
+    # off-pin .uf2 there is not mistaken for a release artifact.
+    _pinned=$(git -C "$QMK_USERSPACE" rev-parse HEAD:qmk_firmware 2>/dev/null) || _pinned=
+    _head=$(git rev-parse HEAD 2>/dev/null) || _head=
+    if [ -n "$_pinned" ] && [ -n "$_head" ] && [ "$_head" != "$_pinned" ]; then
+        echo "warning: off-pin. userspace pins ${_pinned:0:8}, this clone is ${_head:0:8}" >&2
+    fi
+    unset _pinned _head
+fi
+unset _userspace

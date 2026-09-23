@@ -1,3 +1,11 @@
 [submodule "qmk_firmware"]
 	path = qmk_firmware
 	url = https://github.com/qmk/qmk_firmware.git
+# Only ploopyco/aplus needs this, for drashna/pointing_device_gestures and
+# drashna/pointing_device_accel.
+# community_modules.py searches the userspace before the firmware, so this copy
+# wins over any modules/ the firmware ships. Drop it when upstream carries a+,
+# or it silently pins a stale version of whatever upstream vendors.
+[submodule "modules/drashna"]
+	path = modules/drashna
+	url = https://github.com/drashna/qmk_modules.git

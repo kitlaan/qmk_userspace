@@ -17,5 +17,7 @@ jobs:
   publish:
     name: 'QMK Userspace Publish'
     uses: qmk/.github/.github/workflows/qmk_userspace_publish.yml@main
-    if: always() && !cancelled()
+    # The reusable workflow deletes and recreates the `latest` release, with no
+    # ref check of its own. Without this, a branch push replaces main's release.
+    if: always() && !cancelled() && github.ref == 'refs/heads/main'
     needs: build

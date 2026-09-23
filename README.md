@@ -52,8 +52,11 @@ Do not run `qmk config user.qmk_home=...` through the shim. It'll touch
 | `users/kitlaan/` | code shared by all of them |
 | `modules/` | community modules |
 
-Reminder: a new *keyboard* lives in `qmk_firmware/keyboards`, so point the
-submodule at those changes with `git submodule set-url`.
+Reminder: a new *keyboard* lives in `qmk_firmware/keyboards`, not here. Either
+point the submodule at a fork with `git submodule set-url`, or leave the pin
+alone and build that one board from a sibling clone through
+`QMK_FIRMWARE_ROOT`. `keyboards/ploopyco/aplus` takes the second route; its
+keymap readme says why.
 
 ### Cookbook
 

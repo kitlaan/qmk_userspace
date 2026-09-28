@@ -56,6 +56,8 @@ resolves where the keymap is compiled.
 ## Differences from the Ploopy default keymap
 
 * No left-hand mode.
+* `PKC_TGL_ACCEL` on the control layer. It does not persist: the accel module
+  keeps that state in RAM only, so a replug turns acceleration back on.
 * The keymap sits under `rev2_001`, not the shared `aplus/keymaps`, so that
   `qmk compile` can infer `-kb` and `-km`. Ploopy keeps keymaps at the parent
   level, which has no `keyboard.json` and thus defeats inference.

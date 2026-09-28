@@ -24,20 +24,24 @@
 #include "pointing_device_gestures.h"
 
 #include "kitlaan.h"
+#include "modes.h"
 #include "wheels.h"
 
 /* Layer lighting, used to blink when making gestures. */
 // clang-format off
 const rgblight_segment_t PROGMEM righty_nav_layer_colour[] =        RGBLIGHT_LAYER_SEGMENTS( {0, 2, HSV_NAVBLUE} );
 const rgblight_segment_t PROGMEM control_layer_colour[] =           RGBLIGHT_LAYER_SEGMENTS( {0, 2, HSV_RED} );
+const rgblight_segment_t PROGMEM mode_pick_layer_colour[] =         RGBLIGHT_LAYER_SEGMENTS( {0, 2, HSV_PURPLE} );
 const rgblight_segment_t PROGMEM gesture_layer_colour[] =           RGBLIGHT_LAYER_SEGMENTS( {0, 2, HSV_GESTUREYELLOW} );
 const rgblight_segment_t PROGMEM option_changed_layer_colour[] =    RGBLIGHT_LAYER_SEGMENTS( {0, 2, HSV_OPTIONCHANGED} );
 
 /* Lighting layer definitions. Later layers take precedence, so these
-   are defined in the order that they will be displayed in. */
+   are defined in the order that they will be displayed in. Every mode colour
+   goes first, so that control and the picker show over the active mode. */
 const rgblight_segment_t* const PROGMEM my_rgb_layers[] = RGBLIGHT_LAYERS_LIST(
     righty_nav_layer_colour,
     control_layer_colour,
+    mode_pick_layer_colour,
     gesture_layer_colour,
     option_changed_layer_colour
 );
@@ -45,10 +49,33 @@ const rgblight_segment_t* const PROGMEM my_rgb_layers[] = RGBLIGHT_LAYERS_LIST(
 
 user_config_t user_config;
 
-/* Mouse gestures keymap. This has to stay in the keymap translation unit: the
-   gestures module reads the array from its own introspection.c with no extern
-   declaration, so it only resolves where the keymap is compiled. The actions
-   themselves live in gestures.c. */
+static void mode_tap_control(void) {
+    layer_invert(LAYER_CONTROL);
+}
+
+// clang-format off
+/* Indices are spelled out because mode_pick_cells maps roll directions onto
+   them. Reordering this table would silently remap the picker. */
+const mode_t modes[] = {
+    [MODE_BASE] = { .layer  = LAYER_NAV_RIGHT_HANDED,
+                    .colour = RIGHTY_NAV_LAYER_COLOUR,
+                    .tap    = mode_tap_control,
+                    .wheels = mode_wheels_default },
+};
+// clang-format on
+
+/* modes.c works from mode_count; the macro is only for the assertion below,
+   which needs a constant expression. */
+#define MODE_COUNT (sizeof(modes) / sizeof(modes[0]))
+
+const uint8_t mode_count = MODE_COUNT;
+
+_Static_assert(MODE_COUNT <= LAYER_MODE_SLOTS, "More modes than there are layers below LAYER_CONTROL.");
+
+/* Mouse gestures keymap. Since we cannot use custom keycodes in this array and
+   we've overridden the function that uses it, we define this here with
+   KC_NO (no action) to prevent a compiler error. See pointing_device_gestures_trigger()
+   for what the gestures actually do. */
 // clang-format off
 const uint16_t PROGMEM pointing_device_gestures[NUM_GESTURE_DIRECTIONS] =
     GESTURES_CARDINAL_AND_ORDINAL_DIRECTIONS( KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO );
@@ -60,42 +87,50 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // Base layer with all of the mouse-related stuff for everyday use.
     [LAYER_NAV_RIGHT_HANDED] = LAYOUT(  MS_BTN4, MS_BTN5, PKC_DRAG_SCROLL, MS_BTN2,
                                         MS_BTN1, MS_BTN3,
-                                        PKC_GESTURE, TG(LAYER_CONTROL) ),
+                                        PKC_GESTURE, PKC_MODE ),
+    /* Mode slots. Transparent until a mode claims one; mode_set() refuses a slot
+       with no entry in modes[], since a transparent default layer would leave
+       the board with no keymap at all. */
+    [1]  = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
+    [2]  = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
+    [3]  = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
+    [4]  = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
+    [5]  = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
+    [6]  = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
+    [7]  = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
+    [8]  = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
+    [9]  = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
+    [10] = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
+    [11] = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
+    [12] = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
+    [13] = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
     // Layer for all of the customization options.
     [LAYER_CONTROL] = LAYOUT(           PKC_BLINKY_DPI_CONFIG, PKC_ADJUST_LED_BRIGHTNESS, PKC_TGL_VERT_SCRL, PKC_TGL_HORIZ_SCRL,
                                         PKC_TGL_ACCEL, PKC_TGL_DRAG_SCRL,
                                         TG(LAYER_CONTROL), TG(LAYER_CONTROL) ),
-    [2] = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
-    [3] = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
-    [4] = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
-    [5] = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
-    [6] = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
-    [7] = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ )
+    /* Raised while either knob is held, so the buttons mean the same thing
+       whichever knob you use. Both knobs stay transparent, so that a release
+       still reaches the keycode that started the hold. */
+    [LAYER_KNOB_HOLD] = LAYOUT(         XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+                                        XXXXXXX, XXXXXXX,
+                                        _______, _______ )
 };
 // clang-format on
 
-/* Called whenever layers are modified. */
+/* Called whenever layers are modified. The mode colour is not set here: the
+   knob-hold colours are set where the knobs are handled, and the mode colour
+   belongs to the default layer, which this hook does not see. */
 layer_state_t layer_state_set_user(layer_state_t state) {
-    /* Set layer colours. */
-    switch (get_highest_layer(state)) {
-        case LAYER_NAV_RIGHT_HANDED:
-            rgblight_set_layer_state(RIGHTY_NAV_LAYER_COLOUR, true);
+    rgblight_set_layer_state(CONTROL_LAYER_COLOUR, layer_state_cmp(state, LAYER_CONTROL));
+    return state;
+}
 
-            rgblight_set_layer_state(CONTROL_LAYER_COLOUR, false);
-
-            dprintf("change layer: nav\n");
-            break;
-        case LAYER_CONTROL:
-            rgblight_set_layer_state(CONTROL_LAYER_COLOUR, true);
-
-            rgblight_set_layer_state(RIGHTY_NAV_LAYER_COLOUR, false);
-
-            dprintf("change layer: control\n");
-            break;
-        default:
-            rgblight_setrgb(RGB_CYAN);
-            dprintf("change layer: oopsie, invalid layer!\n");
-            break;
+/* Called whenever the mode changes, since QMK does not run
+   layer_state_set_user() for the default layer. quantum_init() also calls this
+   at boot, which is what lights the starting mode. */
+layer_state_t default_layer_state_set_user(layer_state_t state) {
+    for (uint8_t i = 0; i < mode_count; i++) {
+        rgblight_set_layer_state(modes[i].colour, i == mode_current());
     }
     return state;
 }
@@ -147,7 +182,16 @@ void keyboard_post_init_user(void) {
     rgblight_sethsv(0, 0, RGBLIGHT_VAL_STEP * user_config.led_brightness);
 }
 
+void matrix_scan_user(void) {
+    mode_scan();
+}
+
 bool process_record_user(uint16_t keycode, keyrecord_t* record) {
+    /* Both knobs belong to the knob-hold machine in modes.c. */
+    if (mode_process_record(keycode, record)) {
+        return true;
+    }
+
     switch (keycode) {
         case PKC_TGL_VERT_SCRL:
             if (record->event.pressed) {
@@ -205,17 +249,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
                 }
             }
             return true;
-        case PKC_GESTURE:
-            if (record->event.pressed) {
-                /* Send correct gesture mode activation based on preference. */
-                pointing_device_gestures_start();
-                rgblight_set_layer_state(GESTURE_LAYER_COLOUR, true);
-            }
-            /* Switch is released. */
-            else {
-                pointing_device_gestures_end();
-                rgblight_set_layer_state(GESTURE_LAYER_COLOUR, false);
-            }
             return true;
         case PKC_DRAG_SCROLL:
             if (user_config.drag_scroll_mode) {

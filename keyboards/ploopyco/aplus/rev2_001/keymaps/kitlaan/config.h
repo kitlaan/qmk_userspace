@@ -18,4 +18,11 @@
 
 #pragma once
 
-#define DYNAMIC_KEYMAP_LAYER_COUNT 8
+/* Mode picking rolls the ball while the right knob is held. Four directions
+   uses the cardinal rolls only and blinks at a diagonal; eight uses them all. */
+#define MODE_PICK_DIRECTIONS 4
+//#define MODE_PICK_DIRECTIONS 8
+
+/* How long the right knob must be held before it stops counting as a tap. The
+   left knob has no tap action, so it raises LAYER_KNOB_HOLD at once. */
+#define MODE_PICK_HOLD_TERM 250

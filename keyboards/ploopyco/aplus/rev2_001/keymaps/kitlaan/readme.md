@@ -40,14 +40,43 @@ That last step is not optional. The A+ commit records a gitlink at
 recursive submodule command in the repository. The modules come from
 `modules/drashna` in this userspace instead.
 
+## Modes
+
+A mode is a base layer plus the wheel behaviour that belongs with it. The
+buttons come from the layer, but the wheels are read in
+`pointing_device_task_user()` rather than from the keymap, so `modes[]` in
+`keymap.c` carries a handler per mode. Only the base mode exists so far; the
+framework is here for the ones to come.
+
+Hold the right knob and roll the ball to pick a mode. Release without rolling
+and it returns to the previous mode, which is the quick way back and forth.
+A roll onto a direction that no mode claims blinks instead of switching.
+`MODE_PICK_DIRECTIONS` in `config.h` chooses four cardinal rolls or all eight;
+the cardinals keep their modes either way.
+
+Either knob held also raises `LAYER_KNOB_HOLD`, so its six buttons mean the same
+thing whichever knob you use. The knob only selects what the *ball* does: the
+left one makes a mouse gesture, the right one picks a mode. Only the first knob
+down gets the ball, because the gesture module tracks one session at a time.
+
+Layers changed to suit this. `LAYER_CONTROL` moved to 14 and `LAYER_KNOB_HOLD`
+is 15, because QMK resolves a key from the highest active layer and a mode is
+the default layer. The layer count is 16 so that those two never move as modes
+are added; see the comment on the layer enum.
+
 ## Files
 
 | File | Holds |
 | --- | --- |
-| `keymap.c` | the layers, the QMK hooks, and `process_record_user` |
+| `keymap.c` | the layers, the `modes[]` table, and the QMK hooks |
+| `modes.c` | the mode machinery and the knob-hold state behind it |
 | `wheels.c` | the two TMAG5273 wheel sensors and all scroll processing |
 | `gestures.c` | the mouse gesture actions |
 | `kitlaan.h` | `user_config_t`, and the colour, keycode and layer enums |
+
+`modes.c` keeps its own state private, so `keymap.c` reaches the knobs through
+`mode_process_record()`, `mode_scan()` and `mode_task()` rather than sharing
+flags with it.
 
 `pointing_device_gestures[]` has to stay in `keymap.c`: the gestures module
 reads it from its own `introspection.c` with no extern declaration, so it only
@@ -56,6 +85,8 @@ resolves where the keymap is compiled.
 ## Differences from the Ploopy default keymap
 
 * No left-hand mode.
+* The right knob taps to toggle the control layer and holds to pick a mode,
+  where the default toggles control on press.
 * `PKC_TGL_ACCEL` on the control layer. It does not persist: the accel module
   keeps that state in RAM only, so a replug turns acceleration back on.
 * The keymap sits under `rev2_001`, not the shared `aplus/keymaps`, so that

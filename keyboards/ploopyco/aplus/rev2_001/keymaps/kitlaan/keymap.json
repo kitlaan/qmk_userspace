@@ -2,5 +2,10 @@
     "modules": [
         "drashna/pointing_device_accel",
         "drashna/pointing_device_gestures"
-    ]
+    ],
+    "config": {
+        "dynamic_keymap": {
+            "layer_count": 16
+        }
+    }
 }

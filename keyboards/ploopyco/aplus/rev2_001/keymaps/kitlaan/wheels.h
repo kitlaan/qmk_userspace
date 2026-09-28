@@ -18,7 +18,12 @@
 
 #pragma once
 
+#include "modes.h"
+
 /* Bring the two TMAG5273 wheel sensors up. keymap.c owns the QMK init hooks
    and calls these from them. */
 void wheels_pre_init(void);
 void wheels_init(void);
+
+/* The base mode's wheel behaviour, named by modes[] in keymap.c. */
+void mode_wheels_default(wheel_input_t* in, report_mouse_t* report);

@@ -22,10 +22,10 @@
 #include "pointing_device_gestures.h"
 
 #include "kitlaan.h"
+#include "modes.h"
 
-/* Override default function in submodule code so that we can blink whenever
-   a successful gesture is registered. */
-void pointing_device_gestures_trigger(uint8_t direction) {
+/* The mouse gesture actions from the Ploopy default keymap. */
+static void mouse_gesture(uint8_t direction) {
     /* Directions are numbered off 0-7, starting with east. */
     switch (direction) {
         case 0: /* East, Next Virtual Desktop. */
@@ -91,4 +91,17 @@ void pointing_device_gestures_trigger(uint8_t direction) {
 
     /* Flash light to indicate successful gesture processing. */
     rgblight_blink_layer(OPTION_CHANGED_LAYER_COLOUR, OPTION_CHANGE_BLINK_TIMEOUT * 2);
+}
+
+/* Override default function in submodule code so that we can blink whenever
+   a successful gesture is registered. */
+void pointing_device_gestures_trigger(uint8_t direction) {
+    /* Both knobs roll the ball through this one override, so it branches on
+       whichever of them opened the session. */
+    if (mode_pick_active()) {
+        mode_pick_resolve(direction);
+        return;
+    }
+
+    mouse_gesture(direction);
 }

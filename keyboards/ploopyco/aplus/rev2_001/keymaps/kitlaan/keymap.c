@@ -20,6 +20,7 @@
 #include "rgblight.h"
 #include "printf.h"
 
+#include "pointing_device_accel.h"
 #include "pointing_device_gestures.h"
 
 #include "kitlaan.h"
@@ -62,7 +63,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                         PKC_GESTURE, TG(LAYER_CONTROL) ),
     // Layer for all of the customization options.
     [LAYER_CONTROL] = LAYOUT(           PKC_BLINKY_DPI_CONFIG, PKC_ADJUST_LED_BRIGHTNESS, PKC_TGL_VERT_SCRL, PKC_TGL_HORIZ_SCRL,
-                                        KC_NO, PKC_TGL_DRAG_SCRL,
+                                        PKC_TGL_ACCEL, PKC_TGL_DRAG_SCRL,
                                         TG(LAYER_CONTROL), TG(LAYER_CONTROL) ),
     [2] = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
     [3] = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
@@ -187,6 +188,20 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
                 } else {
                     rgblight_blink_layer_repeat(OPTION_CHANGED_LAYER_COLOUR, OPTION_CHANGE_BLINK_TIMEOUT, 2);
                     dprintf("Drag scroll: hold to activate.\n");
+                }
+            }
+            return true;
+        case PKC_TGL_ACCEL:
+            if (record->event.pressed) {
+                /* Not MA_TOGG, so that we can blink. */
+                pointing_device_accel_toggle_enabled();
+
+                if (pointing_device_accel_get_enabled()) {
+                    rgblight_blink_layer(OPTION_CHANGED_LAYER_COLOUR, OPTION_CHANGE_BLINK_TIMEOUT * 2);
+                    dprintf("Accel on.\n");
+                } else {
+                    rgblight_blink_layer_repeat(OPTION_CHANGED_LAYER_COLOUR, OPTION_CHANGE_BLINK_TIMEOUT, 2);
+                    dprintf("Accel off.\n");
                 }
             }
             return true;

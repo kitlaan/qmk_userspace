@@ -70,13 +70,17 @@ static uint8_t previous_mode = MODE_BASE;
 
 /* Knob hold state. Either knob raises LAYER_KNOB_HOLD, so the layer only drops
    once neither of them is holding it up. */
-static uint16_t mode_key_timer    = 0;
-static bool     mode_key_down     = false;
-static bool     mode_key_held     = false; /* past MODE_PICK_HOLD_TERM */
-static bool     knob_hold_used    = false; /* the hold has already done something */
-static bool     mode_pick_session = false; /* the right knob owns the ball */
-static bool     mode_pick_pending = false; /* a pick resolves on the next poll */
-static bool     gesture_key_down  = false; /* the left knob holds the layer up */
+static uint16_t mode_key_timer      = 0;
+static bool     mode_key_down       = false;
+static bool     mode_key_held       = false; /* past KNOB_HOLD_TERM */
+static bool     knob_hold_used      = false; /* the hold has already done something */
+static bool     mode_pick_session   = false; /* the right knob owns the ball */
+static bool     mode_pick_pending   = false; /* a pick resolves on the next poll */
+static bool     gesture_key_down    = false; /* the left knob holds the layer up */
+static uint16_t gesture_key_timer   = 0;
+static bool     gesture_key_used    = false; /* the left knob hold has done something */
+static bool     gesture_tap_pending = false; /* a left tap resolves on the next poll */
+static bool     gesture_tap_ready   = false; /* a left tap runs on the next scan */
 
 /* current_mode is always in range, but nothing tells the compiler so, and with a
    single mode defined it deduces the opposite from the mode_set() early return.
@@ -135,14 +139,26 @@ static void knob_hold_layer_update(void) {
     }
 }
 
+void mode_gesture_fired(void) {
+    gesture_key_used = true;
+}
+
 void mode_pick_resolve(uint8_t direction) {
     knob_hold_used = true;
     mode_set(direction < NUM_GESTURE_DIRECTIONS ? mode_pick_cells[direction] : MODE_NONE);
 }
 
-/* Promote a held right knob out of its tap window. */
+/* Run a resolved left tap, and promote a held right knob out of its tap
+   window. */
 void mode_scan(void) {
-    if (mode_key_down && !mode_key_held && timer_elapsed(mode_key_timer) > MODE_PICK_HOLD_TERM) {
+    if (gesture_tap_ready) {
+        gesture_tap_ready = false;
+        if (mode_at(current_mode)->tap_left) {
+            mode_at(current_mode)->tap_left();
+        }
+    }
+
+    if (mode_key_down && !mode_key_held && timer_elapsed(mode_key_timer) > KNOB_HOLD_TERM) {
         mode_key_held  = true;
         knob_hold_used = false;
         knob_hold_layer_update();
@@ -170,6 +186,14 @@ void mode_task(void) {
             mode_set(previous_mode);
         }
     }
+
+    /* The gesture, if any, lands on this same poll, so a left tap waits for it
+       the same way a pick does. The tap itself runs from mode_scan(): a tap
+       may send mouse buttons, and this poll's own report is still in flight. */
+    if (gesture_tap_pending) {
+        gesture_tap_pending = false;
+        gesture_tap_ready   = !gesture_key_used;
+    }
 }
 
 /* Both knobs. Returns true when the keycode belonged to the knob-hold machine. */
@@ -179,11 +203,18 @@ bool mode_process_record(uint16_t keycode, keyrecord_t* record) {
     if (record->event.pressed && mode_key_held && keycode != PKC_MODE) {
         knob_hold_used = true;
     }
+    if (record->event.pressed && gesture_key_down && keycode != PKC_GESTURE) {
+        gesture_key_used = true;
+    }
 
     switch (keycode) {
         case PKC_GESTURE:
             if (record->event.pressed) {
-                gesture_key_down = true;
+                gesture_key_down  = true;
+                gesture_key_timer = timer_read();
+                /* With the right knob already picking, this press is a chord
+                   for the hold layer, not a tap. */
+                gesture_key_used = mode_pick_session;
 
                 /* One gesture session at a time. The right knob may already own
                    the ball for picking, in which case this knob only gives the
@@ -204,6 +235,8 @@ bool mode_process_record(uint16_t keycode, keyrecord_t* record) {
                     rgblight_set_layer_state(GESTURE_LAYER_COLOUR, false);
                 }
                 knob_hold_layer_update();
+
+                gesture_tap_pending = !gesture_key_used && timer_elapsed(gesture_key_timer) <= KNOB_HOLD_TERM;
             }
             return true;
         case PKC_MODE:
@@ -228,8 +261,8 @@ bool mode_process_record(uint16_t keycode, keyrecord_t* record) {
                     }
                 }
                 /* Released inside the tap window. */
-                else if (mode_at(current_mode)->tap) {
-                    mode_at(current_mode)->tap();
+                else if (mode_at(current_mode)->tap_right) {
+                    mode_at(current_mode)->tap_right();
                 }
             }
         default:

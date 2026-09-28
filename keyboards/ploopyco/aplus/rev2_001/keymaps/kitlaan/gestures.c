@@ -111,5 +111,6 @@ void pointing_device_gestures_trigger(uint8_t direction) {
         return;
     }
 
+    mode_gesture_fired();
     mouse_gesture(direction);
 }

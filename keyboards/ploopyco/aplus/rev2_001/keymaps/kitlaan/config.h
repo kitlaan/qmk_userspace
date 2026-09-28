@@ -37,11 +37,16 @@
 /* Mode picking rolls the ball while the right knob is held. Four directions
    uses the cardinal rolls only and blinks at a diagonal; eight uses them all. */
 #define MODE_PICK_DIRECTIONS 4
-//#define MODE_PICK_DIRECTIONS 8
+// #define MODE_PICK_DIRECTIONS 8
 
-/* How long the right knob must be held before it stops counting as a tap. The
-   left knob has no tap action, so it raises LAYER_KNOB_HOLD at once. */
-#define MODE_PICK_HOLD_TERM 250
+/* How long either knob must be held before it stops counting as a tap. The
+   left knob still raises LAYER_KNOB_HOLD at once, since only its release can
+   tell a tap from a gesture; past this, a release with no roll does nothing. */
+#define KNOB_HOLD_TERM 250
+
+/* How long Fusion mode holds a modifier before it presses the middle button,
+   in ms. See fusion_drag() in keymap.c. */
+#define FUSION_MOD_LEAD_MS 20
 
 /* Turn the LEDs off after this long with no input, in ms. Remove it to keep
    them on. */

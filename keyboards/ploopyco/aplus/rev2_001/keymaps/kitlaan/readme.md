@@ -90,8 +90,8 @@ gh variable set RELEASE_BRANCHES --body '["ploopyco-aplus"]'
 A mode is a base layer plus the wheel behaviour that belongs with it. The
 buttons come from the layer, but the wheels are read in
 `pointing_device_task_user()` rather than from the keymap, so `modes[]` in
-`keymap.c` carries a handler per mode. Only the base mode exists so far; the
-framework is here for the ones to come.
+`keymap.c` carries a handler per mode. There are two modes: the base mode and
+Fusion 360.
 
 Hold the right knob and roll the ball to pick a mode. Release without rolling
 and it returns to the previous mode, which is the quick way back and forth.
@@ -108,6 +108,33 @@ Layers changed to suit this. `LAYER_CONTROL` moved to 14 and `LAYER_KNOB_HOLD`
 is 15, because QMK resolves a key from the highest active layer and a mode is
 the default layer. The layer count is 16 so that those two never move as modes
 are added; see the comment on the layer enum.
+
+### Fusion 360
+
+Roll east from the picker to reach it. Every Fusion navigation action is a
+modifier plus a middle-button drag, so the ball stays a plain cursor and
+selection keeps working without leaving the mode. Both wheels still scroll,
+which is what Fusion zooms on, so the mode needs no wheel handler of its own.
+
+| Button | Fusion | Base |
+| --- | --- | --- |
+| Top left left | Esc, to drop the tool | `MS_BTN4` |
+| Top left | nothing | `MS_BTN5` |
+| Top right | orbit | `PKC_DRAG_SCROLL` |
+| Top right right | right click | unchanged |
+| Bottom left | left click | unchanged |
+| Bottom right | middle click, which also pans | unchanged |
+| Knob left | tap fits the view, hold makes a mouse gesture | hold makes a mouse gesture |
+| Knob right | hold picks a mode | tap toggles control, hold picks a mode |
+
+Orbit is a custom keycode rather than `S(MS_BTN3)`. That would work until you
+clicked something mid-drag: `action.c` clears weak mods on every key press, so
+the shift would vanish and the orbit would quietly become a pan. It also holds
+the shift for `FUSION_MOD_LEAD_MS` before the button, because Fusion reads the
+modifier at the button press.
+
+Fusion has no mouse gesture for roll about the view axis: Ctrl+Shift+middle
+drag zooms.
 
 ## Cheat sheet
 
@@ -126,10 +153,12 @@ label:
 | --- | --- | --- |
 | `/* @doc: ... */` | after a member of `enum my_keycodes` | that keycode |
 | `/* @doc(hold): ... */` | after a member of `enum my_keycodes` | that keycode while held; with no `@doc:`, a press alone does nothing |
-| `/* @doc: ... */` | above a `.tap` handler | the right knob tap in that mode |
-| `/* @doc(detail): ... */` | above a keycode or a `.tap` handler | a second, smaller line under its label |
+| `/* @doc: ... */` | above a `.tap_left` or `.tap_right` handler | that knob's tap in that mode |
+| `/* @doc(detail): ... */` | above a keycode or a tap handler | a second, smaller line under its label |
 | `/* @doc: ... */` | above a layer in `keymaps[]` | the page title |
 | `/* @doc(KEYCODE): ... */` | above a layer | that keycode, on that layer only |
+| `/* @doc(KEYCODE, hold): ... */` | above a layer | that keycode while held, on that layer only; it drops the stock press label |
+| `/* @doc(KEYCODE, detail): ... */` | above a layer | that keycode's second line, on that layer only |
 
 The wheels take the same three tags above a `.wheels` handler, for each mode
 that uses it, or above a layer, for that layer only. A layer tag wins over the

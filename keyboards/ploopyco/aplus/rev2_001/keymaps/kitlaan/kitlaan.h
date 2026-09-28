@@ -21,6 +21,7 @@
 /* Colour layer names. */
 enum {
     RIGHTY_NAV_LAYER_COLOUR = 0,
+    FUSION_LAYER_COLOUR,
     CONTROL_LAYER_COLOUR,
     MODE_PICK_LAYER_COLOUR,
     GESTURE_LAYER_COLOUR,
@@ -51,10 +52,11 @@ enum my_keycodes {
     /* @doc(detail): Hold or toggle. One long blink for toggle, two for hold. */
     PKC_TGL_DRAG_SCRL, /* @doc: Drag scroll type */
     /* @doc(detail): One long blink for on, two for off. A replug turns it back on. */
-    PKC_TGL_ACCEL,   /* @doc: Acceleration */
-    PKC_GESTURE,     /* @doc(hold): Roll for a gesture */
-    PKC_MODE,        /* @doc(hold): Roll to pick a mode */
-    PKC_DRAG_SCROLL, /* @doc: Drag scroll */
+    PKC_TGL_ACCEL,    /* @doc: Acceleration */
+    PKC_GESTURE,      /* @doc(hold): Roll for a gesture */
+    PKC_MODE,         /* @doc(hold): Roll to pick a mode */
+    PKC_FUSION_ORBIT, /* @doc(hold): Orbit */
+    PKC_DRAG_SCROLL,  /* @doc: Drag scroll */
     /* @doc(detail): Four steps, then back to the dimmest. */
     PKC_ADJUST_LED_BRIGHTNESS, /* @doc: LED brightness */
     /* @doc(detail): 600, 900, 1200, 1600, 2400. Blinks once per step: one for 600. */
@@ -70,6 +72,7 @@ enum my_keycodes {
    stored keymap by layer index, so moving them shuffles persistent storage. */
 enum {
     LAYER_NAV_RIGHT_HANDED = 0,
+    LAYER_FUSION           = 1,
     LAYER_CONTROL          = 14,
     LAYER_KNOB_HOLD        = 15,
 };

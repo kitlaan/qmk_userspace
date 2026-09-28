@@ -45,6 +45,8 @@ BUILTIN_LABELS = {
     "MS_BTN4": "Back",
     "MS_BTN5": "Forward",
 }
+# The keycodes whose tap runs the mode's tap_left / tap_right.
+KNOB_TAPS = {"PKC_GESTURE": "left", "PKC_MODE": "right"}
 TRANSPARENT = {"_______", "KC_TRNS", "KC_TRANSPARENT"}
 NO_ACTION = {"XXXXXXX", "KC_NO"}
 
@@ -167,8 +169,7 @@ class Mode:
     name: str
     index: int
     layer: str
-    tap: str
-    tap_detail: str
+    taps: dict  # "left"/"right" -> (label, detail), for each knob tap the mode has
     wheels: dict
     colour: str  # a colour enum name, e.g. RIGHTY_NAV_LAYER_COLOUR
 
@@ -240,17 +241,20 @@ def parse_modes(text, sources, mode_indices):
     modes = []
     for name, fields_text in re.findall(r"\[\s*(\w+)\s*\]\s*=\s*\{(.*?)\}", strip_comments(body), re.S):
         fields = dict(re.findall(r"\.(\w+)\s*=\s*(\w+)", fields_text))
-        tap, tap_detail = None, None
-        if "tap" in fields:
-            tags = function_tags(sources, fields["tap"])
+        taps = {}
+        for knob in ("left", "right"):
+            handler = fields.get(f"tap_{knob}")
+            if handler is None:
+                continue
+            tags = function_tags(sources, handler)
             if "" not in tags:
-                raise CheatsheetError(f"{fields['tap']}() has no `/* @doc: ... */` tag")
-            tap, tap_detail = tags[""], tags.get("detail")
+                raise CheatsheetError(f"{handler}() has no `/* @doc: ... */` tag")
+            taps[knob] = (tags[""], tags.get("detail"))
         wheels = wheel_labels(function_tags(sources, fields["wheels"]))
         for knob, label in wheels.items():
             if label is None:
                 raise CheatsheetError(f"{fields['wheels']}() has no `@doc(wheels)` or `@doc(wheel_{knob})` tag")
-        modes.append(Mode(name, mode_indices[name], fields["layer"], tap, tap_detail, wheels, fields["colour"]))
+        modes.append(Mode(name, mode_indices[name], fields["layer"], taps, wheels, fields["colour"]))
     return modes
 
 
@@ -452,11 +456,18 @@ def layer_controls(keymap, layer, base=None):
                 controls.append(Control(position, press="(held)"))
                 continue
             source, keycode = base, base.keys[position]
+        # A layer's hold tag gives a key a new meaning, so the stock press
+        # label no longer applies. Only an explicit layer label survives it.
+        hold = source.tags.get(f"{keycode}, hold")
+        detail = source.tags.get(f"{keycode}, detail", keymap.keycode_details.get(keycode))
+        if hold is not None:
+            controls.append(Control(position, source.tags.get(keycode), detail, hold))
+            continue
         controls.append(
             Control(
                 position,
                 key_label(keymap, source, keycode),
-                keymap.keycode_details.get(keycode),
+                detail,
                 keymap.keycode_holds.get(keycode),
             )
         )
@@ -474,9 +485,10 @@ def build_pages(keymap):
         for control in controls:
             if control.position.startswith("knob"):
                 control.turn = wheels[control.position.removeprefix("knob_")]
-            # PKC_MODE's tap belongs to the mode.
-            if layer.keys[control.position] == "PKC_MODE":
-                control.press, control.detail = mode.tap, mode.tap_detail
+            # The knob keycodes' taps belong to the mode: modes.c runs them.
+            knob = KNOB_TAPS.get(layer.keys[control.position])
+            if knob in mode.taps:
+                control.press, control.detail = mode.taps[knob]
         pages.append(Page(layer_title(layer), keymap.colours.get(mode.colour), controls))
 
     # The colour names below are the ones that keymap.c and modes.c light for

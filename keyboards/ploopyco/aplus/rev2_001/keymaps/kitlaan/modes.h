@@ -39,13 +39,15 @@ typedef struct {
     uint8_t colour;
     void (*enter)(void);
     void (*exit)(void);
-    void (*tap)(void); /* right knob tapped rather than held */
+    void (*tap_left)(void);  /* left knob tapped, with no gesture */
+    void (*tap_right)(void); /* right knob tapped rather than held */
     void (*wheels)(wheel_input_t* in, report_mouse_t* report);
 } mode_t;
 
 /* Mode indices, which are also the picker cells. */
 enum {
     MODE_BASE = 0,
+    MODE_FUSION,
 };
 
 /* A picker cell that no mode claims. */
@@ -65,6 +67,8 @@ bool mode_process_record(uint16_t keycode, keyrecord_t* record);
 void mode_scan(void);
 void mode_task(void);
 
-/* gestures.c hands a roll over when the right knob owns the ball. */
+/* gestures.c hands a roll over when the right knob owns the ball, and
+   reports any other gesture so that it does not also count as a tap. */
 bool mode_pick_active(void);
 void mode_pick_resolve(uint8_t direction);
+void mode_gesture_fired(void);

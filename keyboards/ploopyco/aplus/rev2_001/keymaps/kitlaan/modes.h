@@ -46,6 +46,7 @@ typedef struct {
 /* Mode indices, which are also the picker cells. */
 enum {
     MODE_BASE = 0,
+    MODE_FUSION,
 };
 
 /* A picker cell that no mode claims. */

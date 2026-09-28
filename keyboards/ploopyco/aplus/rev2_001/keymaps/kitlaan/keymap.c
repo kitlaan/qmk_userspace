@@ -30,6 +30,7 @@
 /* Layer lighting, used to blink when making gestures. */
 // clang-format off
 const rgblight_segment_t PROGMEM righty_nav_layer_colour[] =        RGBLIGHT_LAYER_SEGMENTS( {0, 2, HSV_NAVBLUE} );
+const rgblight_segment_t PROGMEM fusion_layer_colour[] =            RGBLIGHT_LAYER_SEGMENTS( {0, 2, HSV_NAVGREEN} );
 const rgblight_segment_t PROGMEM control_layer_colour[] =           RGBLIGHT_LAYER_SEGMENTS( {0, 2, HSV_RED} );
 const rgblight_segment_t PROGMEM mode_pick_layer_colour[] =         RGBLIGHT_LAYER_SEGMENTS( {0, 2, HSV_PURPLE} );
 const rgblight_segment_t PROGMEM gesture_layer_colour[] =           RGBLIGHT_LAYER_SEGMENTS( {0, 2, HSV_GESTUREYELLOW} );
@@ -40,6 +41,7 @@ const rgblight_segment_t PROGMEM option_changed_layer_colour[] =    RGBLIGHT_LAY
    goes first, so that control and the picker show over the active mode. */
 const rgblight_segment_t* const PROGMEM my_rgb_layers[] = RGBLIGHT_LAYERS_LIST(
     righty_nav_layer_colour,
+    fusion_layer_colour,
     control_layer_colour,
     mode_pick_layer_colour,
     gesture_layer_colour,
@@ -53,14 +55,43 @@ static void mode_tap_control(void) {
     layer_invert(LAYER_CONTROL);
 }
 
+/* Fusion navigates with a modifier plus a middle drag. The modifier has to be
+   registered strongly: action.c clears weak mods on every key press, so a
+   plain S(MS_BTN3) would lose its shift as soon as you clicked anything else
+   while orbiting, and the orbit would silently become a pan. */
+static void fusion_drag(uint8_t mods, bool pressed) {
+    if (pressed) {
+        register_mods(mods);
+        register_code(MS_BTN3);
+    } else {
+        unregister_code(MS_BTN3);
+        unregister_mods(mods);
+    }
+}
+
+/* Fusion fits the view to the component on a middle double-click. The delays
+   are for the host: each button edge sends its own HID report, so a
+   zero-length click is easy to miss. */
+static void mode_tap_fusion_fit(void) {
+    tap_code_delay(MS_BTN3, 20);
+    wait_ms(60);
+    tap_code_delay(MS_BTN3, 20);
+}
+
 // clang-format off
 /* Indices are spelled out because mode_pick_cells maps roll directions onto
    them. Reordering this table would silently remap the picker. */
 const mode_t modes[] = {
-    [MODE_BASE] = { .layer  = LAYER_NAV_RIGHT_HANDED,
-                    .colour = RIGHTY_NAV_LAYER_COLOUR,
-                    .tap    = mode_tap_control,
-                    .wheels = mode_wheels_default },
+    [MODE_BASE]   = { .layer  = LAYER_NAV_RIGHT_HANDED,
+                      .colour = RIGHTY_NAV_LAYER_COLOUR,
+                      .tap    = mode_tap_control,
+                      .wheels = mode_wheels_default },
+    /* Fusion needs no wheel handler of its own: it zooms on a plain scroll
+       wheel, which is what the base handler already sends. */
+    [MODE_FUSION] = { .layer  = LAYER_FUSION,
+                      .colour = FUSION_LAYER_COLOUR,
+                      .tap    = mode_tap_fusion_fit,
+                      .wheels = mode_wheels_default },
 };
 // clang-format on
 
@@ -91,7 +122,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     /* Mode slots. Transparent until a mode claims one; mode_set() refuses a slot
        with no entry in modes[], since a transparent default layer would leave
        the board with no keymap at all. */
-    [1]  = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
+    /* Fusion 360. Every navigation action there is a modifier plus a middle
+       drag, so the ball stays a plain cursor and these are ordinary keycodes.
+       Pan sits on TLL as well as BR, because BR is the middle button that
+       already pans. */
+    [LAYER_FUSION] = LAYOUT(            MS_BTN3, PKC_FUSION_ORBIT, PKC_FUSION_ROLL, MS_BTN2,
+                                        MS_BTN1, MS_BTN3,
+                                        PKC_GESTURE, PKC_MODE ),
     [2]  = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
     [3]  = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
     [4]  = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
@@ -235,6 +272,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
                 }
             }
             return true;
+        case PKC_FUSION_ORBIT:
+            fusion_drag(MOD_LSFT, record->event.pressed);
+            return false;
+        case PKC_FUSION_ROLL:
+            fusion_drag(MOD_LSFT | MOD_LCTL, record->event.pressed);
+            return false;
         case PKC_TGL_ACCEL:
             if (record->event.pressed) {
                 /* Not MA_TOGG, so that we can blink. */

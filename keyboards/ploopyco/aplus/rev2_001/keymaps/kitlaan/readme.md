@@ -64,6 +64,32 @@ is 15, because QMK resolves a key from the highest active layer and a mode is
 the default layer. The layer count is 16 so that those two never move as modes
 are added; see the comment on the layer enum.
 
+### Fusion 360
+
+Roll east from the picker to reach it. Every Fusion navigation action is a
+modifier plus a middle-button drag, so the ball stays a plain cursor and
+selection keeps working without leaving the mode. Both wheels still scroll,
+which is what Fusion zooms on, so the mode needs no wheel handler of its own.
+
+| Button | Fusion | Base |
+| --- | --- | --- |
+| Top left left | pan | `MS_BTN4` |
+| Top left | orbit | `MS_BTN5` |
+| Top right | roll | `PKC_DRAG_SCROLL` |
+| Top right right | right click | unchanged |
+| Bottom left | left click | unchanged |
+| Bottom right | middle click, which also pans | unchanged |
+| Knob left | mouse gesture | unchanged |
+| Knob right | tap fits the view, hold picks a mode | tap toggles control |
+
+Orbit and roll are custom keycodes rather than `S(MS_BTN3)` and
+`C(S(MS_BTN3))`. Those would work until you clicked something mid-drag:
+`action.c` clears weak mods on every key press, so the shift would vanish and
+the orbit would quietly become a pan.
+
+The roll combo is unverified. Fusion may not expose roll about the view axis as
+a mouse gesture at all, in which case that button wants a different job.
+
 ## Files
 
 | File | Holds |

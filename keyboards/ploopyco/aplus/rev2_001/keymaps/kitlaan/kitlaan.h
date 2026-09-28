@@ -21,6 +21,7 @@
 /* Colour layer names. */
 enum {
     RIGHTY_NAV_LAYER_COLOUR = 0,
+    FUSION_LAYER_COLOUR,
     CONTROL_LAYER_COLOUR,
     MODE_PICK_LAYER_COLOUR,
     GESTURE_LAYER_COLOUR,
@@ -51,6 +52,8 @@ enum my_keycodes {
     PKC_TGL_ACCEL,
     PKC_GESTURE,
     PKC_MODE,
+    PKC_FUSION_ORBIT,
+    PKC_FUSION_ROLL,
     PKC_DRAG_SCROLL,
     PKC_ADJUST_LED_BRIGHTNESS,
     PKC_BLINKY_DPI_CONFIG,
@@ -65,6 +68,7 @@ enum my_keycodes {
    stored keymap by layer index, so moving them shuffles persistent storage. */
 enum {
     LAYER_NAV_RIGHT_HANDED = 0,
+    LAYER_FUSION           = 1,
     LAYER_CONTROL          = 14,
     LAYER_KNOB_HOLD        = 15,
 };

@@ -22,6 +22,7 @@
 #include "tmag5273wheel.h"
 
 #include "kitlaan.h"
+#include "modes.h"
 #include "wheels.h"
 
 /* State variables for wheels. */
@@ -76,7 +77,89 @@ static int16_t rightwheel_volume_scroll_tick = 0;
 static uint32_t leftwheel_timeout  = 0;
 static uint32_t rightwheel_timeout = 0;
 
+/* Wheels for the base mode: the left one scrolls vertically and the right one
+   horizontally, either optionally sent as arrow keys instead. */
+void mode_wheels_default(wheel_input_t* in, report_mouse_t* report) {
+    /* If scroll arrow mode is activated for horizontal scrolling, then we do that.
+       This behaviour is the same across OSes. */
+    if (user_config.horizontal_scroll_arrows) {
+        leftwheel_arrow_scroll_tick += in->left_delta;
+        rightwheel_arrow_scroll_tick += in->right_delta;
+
+        if (rightwheel_arrow_scroll_tick > TMAG5273_HORIZ_SCROLL_TICK_SIZE) {
+            tap_code(KC_RIGHT);
+            rightwheel_arrow_scroll_tick = 0;
+        } else if (rightwheel_arrow_scroll_tick < -TMAG5273_HORIZ_SCROLL_TICK_SIZE) {
+            tap_code(KC_LEFT);
+            rightwheel_arrow_scroll_tick = 0;
+        }
+        /* Set the delta to zero so we don't scroll *and* arrow at the same time. */
+        in->right_delta = 0;
+    }
+
+    /* If scroll arrow mode is activated for vertical scrolling, then we do that.
+       This behaviour is the same across OSes. */
+    if (user_config.vertical_scroll_arrows) {
+        leftwheel_arrow_scroll_tick += in->left_delta;
+        rightwheel_arrow_scroll_tick += in->right_delta;
+
+        if (leftwheel_arrow_scroll_tick > TMAG5273_VERT_SCROLL_TICK_SIZE) {
+            tap_code(KC_DOWN);
+            leftwheel_arrow_scroll_tick = 0;
+        } else if (leftwheel_arrow_scroll_tick < -TMAG5273_VERT_SCROLL_TICK_SIZE) {
+            tap_code(KC_UP);
+            leftwheel_arrow_scroll_tick = 0;
+        }
+        /* Set the delta to zero so we don't scroll *and* arrow at the same time. */
+        in->left_delta = 0;
+    }
+
+    /* If we're on Windows or Linux, send hi-res scroll events. */
+    if ((detected_host_os() == OS_WINDOWS || detected_host_os() == OS_LINUX)) {
+        if (in->left_deadzone > (TMAG5273_WHEEL_DEADZONE - 10) || in->left_deadzone < (-TMAG5273_WHEEL_DEADZONE + 10)) {
+            report->v = -in->left_delta / TMAG5273_VERTICAL_WHEEL_SPEED_DIV;
+        }
+        if (in->right_deadzone > (TMAG5273_WHEEL_DEADZONE - 10) || in->right_deadzone < (-TMAG5273_WHEEL_DEADZONE + 10)) {
+            if (!user_config.horizontal_scroll_arrows) {
+                report->h = in->right_delta / TMAG5273_HORIZONAL_WHEEL_SPEED_DIV;
+            }
+        }
+
+    } else {
+        /* In this case, we're on another OS, so we just send regular scroll events. */
+        /* Certain operating systems, like MacOS, don't play well with the
+           high-res scrolling implementation. For more details, see:
+           https://github.com/qmk/qmk_firmware/issues/17585#issuecomment-2325248167
+           128 gives the scroll wheels "ticks". */
+
+        leftwheel_lowres_scroll_tick += in->left_delta;
+        rightwheel_lowres_scroll_tick += in->right_delta;
+
+        if (leftwheel_lowres_scroll_tick > TMAG5273_LOWRES_TICK_SIZE) {
+            report->v                    = -1;
+            leftwheel_lowres_scroll_tick = 0;
+        } else if (leftwheel_lowres_scroll_tick < -TMAG5273_LOWRES_TICK_SIZE) {
+            report->v                    = 1;
+            leftwheel_lowres_scroll_tick = 0;
+        }
+
+        if (rightwheel_lowres_scroll_tick > TMAG5273_LOWRES_TICK_SIZE) {
+            if (!user_config.horizontal_scroll_arrows) {
+                report->h = 1;
+            }
+            rightwheel_lowres_scroll_tick = 0;
+        } else if (rightwheel_lowres_scroll_tick < -TMAG5273_LOWRES_TICK_SIZE) {
+            if (!user_config.horizontal_scroll_arrows) {
+                report->h = -1;
+            }
+            rightwheel_lowres_scroll_tick = 0;
+        }
+    }
+}
+
 report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
+    mode_task();
+
     // throttle reads
     if (timer_elapsed32(last_scroll_time) > 10) {
         uint16_t leftwheel_rawangle  = tmag5273_get_angle(TMAG5273_D0_I2C_ADDRESS);
@@ -155,80 +238,10 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
             return mouse_report;
         }
 
-        /* If scroll arrow mode is activated for horizontal scrolling, then we do that.
-           This behaviour is the same across OSes. */
-        if (user_config.horizontal_scroll_arrows) {
-            leftwheel_arrow_scroll_tick += leftwheel_delta;
-            rightwheel_arrow_scroll_tick += rightwheel_delta;
+        wheel_input_t wheels = {.left_delta = leftwheel_delta, .right_delta = rightwheel_delta, .left_deadzone = leftwheel_deadzone_distance, .right_deadzone = rightwheel_deadzone_distance};
 
-            if (rightwheel_arrow_scroll_tick > TMAG5273_HORIZ_SCROLL_TICK_SIZE) {
-                tap_code(KC_RIGHT);
-                rightwheel_arrow_scroll_tick = 0;
-            } else if (rightwheel_arrow_scroll_tick < -TMAG5273_HORIZ_SCROLL_TICK_SIZE) {
-                tap_code(KC_LEFT);
-                rightwheel_arrow_scroll_tick = 0;
-            }
-            /* Set the delta to zero so we don't scroll *and* arrow at the same time. */
-            rightwheel_delta = 0;
-        }
-
-        /* If scroll arrow mode is activated for vertical scrolling, then we do that.
-           This behaviour is the same across OSes. */
-        if (user_config.vertical_scroll_arrows) {
-            leftwheel_arrow_scroll_tick += leftwheel_delta;
-            rightwheel_arrow_scroll_tick += rightwheel_delta;
-
-            if (leftwheel_arrow_scroll_tick > TMAG5273_VERT_SCROLL_TICK_SIZE) {
-                tap_code(KC_DOWN);
-                leftwheel_arrow_scroll_tick = 0;
-            } else if (leftwheel_arrow_scroll_tick < -TMAG5273_VERT_SCROLL_TICK_SIZE) {
-                tap_code(KC_UP);
-                leftwheel_arrow_scroll_tick = 0;
-            }
-            /* Set the delta to zero so we don't scroll *and* arrow at the same time. */
-            leftwheel_delta = 0;
-        }
-
-        /* If we're on Windows or Linux, send hi-res scroll events. */
-        if ((detected_host_os() == OS_WINDOWS || detected_host_os() == OS_LINUX)) {
-            if (leftwheel_deadzone_distance > (TMAG5273_WHEEL_DEADZONE - 10) || leftwheel_deadzone_distance < (-TMAG5273_WHEEL_DEADZONE + 10)) {
-                mouse_report.v = -leftwheel_delta / TMAG5273_VERTICAL_WHEEL_SPEED_DIV;
-            }
-            if (rightwheel_deadzone_distance > (TMAG5273_WHEEL_DEADZONE - 10) || rightwheel_deadzone_distance < (-TMAG5273_WHEEL_DEADZONE + 10)) {
-                if (!user_config.horizontal_scroll_arrows) {
-                    mouse_report.h = rightwheel_delta / TMAG5273_HORIZONAL_WHEEL_SPEED_DIV;
-                }
-            }
-
-        } else {
-            /* In this case, we're on another OS, so we just send regular scroll events. */
-            /* Certain operating systems, like MacOS, don't play well with the
-               high-res scrolling implementation. For more details, see:
-               https://github.com/qmk/qmk_firmware/issues/17585#issuecomment-2325248167
-               128 gives the scroll wheels "ticks". */
-
-            leftwheel_lowres_scroll_tick += leftwheel_delta;
-            rightwheel_lowres_scroll_tick += rightwheel_delta;
-
-            if (leftwheel_lowres_scroll_tick > TMAG5273_LOWRES_TICK_SIZE) {
-                mouse_report.v               = -1;
-                leftwheel_lowres_scroll_tick = 0;
-            } else if (leftwheel_lowres_scroll_tick < -TMAG5273_LOWRES_TICK_SIZE) {
-                mouse_report.v               = 1;
-                leftwheel_lowres_scroll_tick = 0;
-            }
-
-            if (rightwheel_lowres_scroll_tick > TMAG5273_LOWRES_TICK_SIZE) {
-                if (!user_config.horizontal_scroll_arrows) {
-                    mouse_report.h = 1;
-                }
-                rightwheel_lowres_scroll_tick = 0;
-            } else if (rightwheel_lowres_scroll_tick < -TMAG5273_LOWRES_TICK_SIZE) {
-                if (!user_config.horizontal_scroll_arrows) {
-                    mouse_report.h = -1;
-                }
-                rightwheel_lowres_scroll_tick = 0;
-            }
+        if (mode_at(mode_current())->wheels) {
+            mode_at(mode_current())->wheels(&wheels, &mouse_report);
         }
 
         /* Set scroll data to zero if the corresponding button is

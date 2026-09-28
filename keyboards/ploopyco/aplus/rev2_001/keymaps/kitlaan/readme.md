@@ -40,6 +40,19 @@ That last step is not optional. The A+ commit records a gitlink at
 recursive submodule command in the repository. The modules come from
 `modules/drashna` in this userspace instead.
 
+## Files
+
+| File | Holds |
+| --- | --- |
+| `keymap.c` | the layers, the QMK hooks, and `process_record_user` |
+| `wheels.c` | the two TMAG5273 wheel sensors and all scroll processing |
+| `gestures.c` | the mouse gesture actions |
+| `kitlaan.h` | `user_config_t`, and the colour, keycode and layer enums |
+
+`pointing_device_gestures[]` has to stay in `keymap.c`: the gestures module
+reads it from its own `introspection.c` with no extern declaration, so it only
+resolves where the keymap is compiled.
+
 ## Differences from the Ploopy default keymap
 
 * No left-hand mode.

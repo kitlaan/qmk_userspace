@@ -6,6 +6,19 @@ permissions:
   contents: write
 
 jobs:
+  targets:
+    name: 'QMK Userspace Targets'
+    runs-on: ubuntu-latest
+    outputs:
+      any: ${{ steps.check.outputs.any }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        # The build uploads no artifact when there is nothing to build, and its
+        # upload step is continue-on-error, so publish would fail on an empty
+        # download rather than skip.
+        run: echo "any=$(jq '.build_targets | length > 0' qmk.json)" >> "$GITHUB_OUTPUT"
+
   build:
     name: 'QMK Userspace Build'
     uses: qmk/.github/.github/workflows/qmk_userspace_build.yml@main
@@ -19,5 +32,5 @@ jobs:
     uses: qmk/.github/.github/workflows/qmk_userspace_publish.yml@main
     # The reusable workflow deletes and recreates the `latest` release, with no
     # ref check of its own. Without this, a branch push replaces main's release.
-    if: always() && !cancelled() && github.ref == 'refs/heads/main'
-    needs: build
+    if: always() && !cancelled() && github.ref == 'refs/heads/main' && needs.targets.outputs.any == 'true'
+    needs: [build, targets]

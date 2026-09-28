@@ -6,6 +6,9 @@ AlignConsecutiveDeclarations: 'true'
 AlignOperands: 'true'
 AllowAllParametersOfDeclarationOnNextLine: 'false'
 AllowShortCaseLabelsOnASingleLine: 'false'
+# QMK's own config omits this, but ColumnLimit is 1000, so Google's short-enum
+# joining collapses a layer or keycode enum onto one unreadable line.
+AllowShortEnumsOnASingleLine: 'false'
 AllowShortFunctionsOnASingleLine: Empty
 AllowShortLoopsOnASingleLine: 'false'
 AlwaysBreakAfterDefinitionReturnType: None

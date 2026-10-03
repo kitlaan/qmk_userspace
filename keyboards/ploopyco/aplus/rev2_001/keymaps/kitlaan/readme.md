@@ -89,6 +89,9 @@ resolves where the keymap is compiled.
   where the default toggles control on press.
 * `PKC_TGL_ACCEL` on the control layer. It does not persist: the accel module
   keeps that state in RAM only, so a replug turns acceleration back on.
+* Drag scroll comes from `dragscroll.c`, not `is_drag_scroll` in
+  `ploopyco.c`, so that it slows down on hosts without hi-res scroll (macOS).
+  The divisors still come from the board's `config.h`.
 * The keymap sits under `rev2_001`, not the shared `aplus/keymaps`, so that
   `qmk compile` can infer `-kb` and `-km`. Ploopy keeps keymaps at the parent
   level, which has no `keyboard.json` and thus defeats inference.

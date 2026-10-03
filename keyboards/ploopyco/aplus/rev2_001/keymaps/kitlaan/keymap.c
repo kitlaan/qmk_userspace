@@ -25,6 +25,7 @@
 
 #include "kitlaan.h"
 #include "modes.h"
+#include "dragscroll.h"
 #include "wheels.h"
 
 /* Layer lighting, used to blink when making gestures. */
@@ -253,12 +254,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
         case PKC_DRAG_SCROLL:
             if (user_config.drag_scroll_mode) {
                 if (record->event.pressed) {
-                    toggle_drag_scroll();
+                    dragscroll_toggle();
                 }
             }
             /* Press and hold mode. */
             else {
-                is_drag_scroll = record->event.pressed;
+                dragscroll_set(record->event.pressed);
             }
             return true;
         case PKC_ADJUST_LED_BRIGHTNESS:

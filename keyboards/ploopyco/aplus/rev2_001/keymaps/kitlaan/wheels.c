@@ -21,6 +21,7 @@
 
 #include "tmag5273wheel.h"
 
+#include "dragscroll.h"
 #include "kitlaan.h"
 #include "modes.h"
 #include "wheels.h"
@@ -159,6 +160,7 @@ void mode_wheels_default(wheel_input_t* in, report_mouse_t* report) {
 
 report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
     mode_task();
+    dragscroll_task(&mouse_report);
 
     // throttle reads
     if (timer_elapsed32(last_scroll_time) > 10) {

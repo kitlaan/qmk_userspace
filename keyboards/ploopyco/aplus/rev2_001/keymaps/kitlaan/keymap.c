@@ -34,7 +34,9 @@ const rgblight_segment_t PROGMEM righty_nav_layer_colour[] =        RGBLIGHT_LAY
 const rgblight_segment_t PROGMEM control_layer_colour[] =           RGBLIGHT_LAYER_SEGMENTS( {0, 2, HSV_RED} );
 const rgblight_segment_t PROGMEM mode_pick_layer_colour[] =         RGBLIGHT_LAYER_SEGMENTS( {0, 2, HSV_PURPLE} );
 const rgblight_segment_t PROGMEM gesture_layer_colour[] =           RGBLIGHT_LAYER_SEGMENTS( {0, 2, HSV_GESTUREYELLOW} );
-const rgblight_segment_t PROGMEM option_changed_layer_colour[] =    RGBLIGHT_LAYER_SEGMENTS( {0, 2, HSV_OPTIONCHANGED} );
+/* White, not the board's HSV_OPTIONCHANGED: that pink-red is hard to see as a
+   blink over the red control layer, where most option blinks happen. */
+const rgblight_segment_t PROGMEM option_changed_layer_colour[] =    RGBLIGHT_LAYER_SEGMENTS( {0, 2, HSV_WHITE} );
 
 /* Lighting layer definitions. Later layers take precedence, so these
    are defined in the order that they will be displayed in. Every mode colour
@@ -286,7 +288,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
                 cycle_dpi();
 
                 dprintf("DPI changed. Current DPI = %d\n", dpi_array[keyboard_config.dpi_config]);
-                rgblight_blink_layer_repeat(OPTION_CHANGED_LAYER_COLOUR, OPTION_CHANGE_BLINK_TIMEOUT, keyboard_config.dpi_config + 1);
+                rgblight_blink_layer_repeat(OPTION_CHANGED_LAYER_COLOUR, DPI_BLINK_TIMEOUT, keyboard_config.dpi_config + 1);
             }
             return true;
         default:

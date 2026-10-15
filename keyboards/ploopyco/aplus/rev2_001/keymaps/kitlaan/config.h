@@ -22,6 +22,10 @@
    This applies only when the EEPROM is reset; otherwise the stored DPI wins. */
 #define PLOOPY_DPI_DEFAULT 2
 
+/* The DPI blink is a count, one per step, so it is slower than the board's
+   OPTION_CHANGE_BLINK_TIMEOUT to keep the blinks easy to count. */
+#define DPI_BLINK_TIMEOUT 300
+
 /* Mode picking rolls the ball while the right knob is held. Four directions
    uses the cardinal rolls only and blinks at a diagonal; eight uses them all. */
 #define MODE_PICK_DIRECTIONS 4

@@ -18,6 +18,10 @@
 
 #pragma once
 
+/* Index into ploopyco.c's PLOOPY_DPI_OPTIONS, { 600, 900, 1200, 1600, 2400 }.
+   This applies only when the EEPROM is reset; otherwise the stored DPI wins. */
+#define PLOOPY_DPI_DEFAULT 2
+
 /* Mode picking rolls the ball while the right knob is held. Four directions
    uses the cardinal rolls only and blinks at a diagonal; eight uses them all. */
 #define MODE_PICK_DIRECTIONS 4

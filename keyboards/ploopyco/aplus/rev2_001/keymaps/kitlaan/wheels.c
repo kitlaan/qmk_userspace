@@ -78,6 +78,11 @@ static int16_t rightwheel_volume_scroll_tick = 0;
 static uint32_t leftwheel_timeout  = 0;
 static uint32_t rightwheel_timeout = 0;
 
+/* True once a wheel has turned far enough from rest to count as a scroll. */
+static bool wheel_past_deadzone(int16_t deadzone_distance) {
+    return deadzone_distance > (TMAG5273_WHEEL_DEADZONE - 10) || deadzone_distance < (-TMAG5273_WHEEL_DEADZONE + 10);
+}
+
 /* Wheels for the base mode: the left one scrolls vertically and the right one
    horizontally, either optionally sent as arrow keys instead. */
 void mode_wheels_default(wheel_input_t* in, report_mouse_t* report) {
@@ -117,10 +122,10 @@ void mode_wheels_default(wheel_input_t* in, report_mouse_t* report) {
 
     /* If we're on Windows or Linux, send hi-res scroll events. */
     if ((detected_host_os() == OS_WINDOWS || detected_host_os() == OS_LINUX)) {
-        if (in->left_deadzone > (TMAG5273_WHEEL_DEADZONE - 10) || in->left_deadzone < (-TMAG5273_WHEEL_DEADZONE + 10)) {
+        if (wheel_past_deadzone(in->left_deadzone)) {
             report->v = -in->left_delta / TMAG5273_VERTICAL_WHEEL_SPEED_DIV;
         }
-        if (in->right_deadzone > (TMAG5273_WHEEL_DEADZONE - 10) || in->right_deadzone < (-TMAG5273_WHEEL_DEADZONE + 10)) {
+        if (wheel_past_deadzone(in->right_deadzone)) {
             if (!user_config.horizontal_scroll_arrows) {
                 report->h = in->right_delta / TMAG5273_HORIZONAL_WHEEL_SPEED_DIV;
             }
@@ -217,8 +222,16 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
 
         /* If we're on the control layers, both wheels adjust the volume. */
         if (layer_state_is(LAYER_CONTROL)) {
-            leftwheel_volume_scroll_tick += leftwheel_delta;
-            rightwheel_volume_scroll_tick += rightwheel_delta;
+            /* The same guards as scrolling. A knob press turns its wheel a
+               little before the switch closes, and the knobs are how this
+               layer is left, so without the deadzone each exit nudged the
+               volume. */
+            if (!matrix_is_on(0, 6) && wheel_past_deadzone(leftwheel_deadzone_distance)) {
+                leftwheel_volume_scroll_tick += leftwheel_delta;
+            }
+            if (!matrix_is_on(0, 7) && wheel_past_deadzone(rightwheel_deadzone_distance)) {
+                rightwheel_volume_scroll_tick += rightwheel_delta;
+            }
 
             if (leftwheel_volume_scroll_tick > TMAG5273_VOLUME_SCROLL_TICK_SIZE) {
                 tap_code(KC_VOLU);
@@ -239,6 +252,11 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
                control layer. */
             return mouse_report;
         }
+
+        /* Start each visit to the control layer from zero, so that a count
+           left over from the last visit cannot turn a tiny wiggle into a step. */
+        leftwheel_volume_scroll_tick  = 0;
+        rightwheel_volume_scroll_tick = 0;
 
         wheel_input_t wheels = {.left_delta = leftwheel_delta, .right_delta = rightwheel_delta, .left_deadzone = leftwheel_deadzone_distance, .right_deadzone = rightwheel_deadzone_distance};
 

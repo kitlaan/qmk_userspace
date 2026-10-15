@@ -24,6 +24,14 @@
 #include "kitlaan.h"
 #include "modes.h"
 
+/* The Ploopy default, which suits GNOME with horizontal workspaces. */
+#ifndef GESTURE_LINUX_DESKTOP_NEXT
+#    define GESTURE_LINUX_DESKTOP_NEXT LCA(KC_RIGHT)
+#endif
+#ifndef GESTURE_LINUX_DESKTOP_PREV
+#    define GESTURE_LINUX_DESKTOP_PREV LCA(KC_LEFT)
+#endif
+
 /* The mouse gesture actions from the Ploopy default keymap. */
 static void mouse_gesture(uint8_t direction) {
     /* Directions are numbered off 0-7, starting with east. */
@@ -33,9 +41,9 @@ static void mouse_gesture(uint8_t direction) {
             if (detected_host_os() == OS_WINDOWS) {
                 tap_code16(LCG(KC_RIGHT));
             }
-            /* On Linux, send CTRL + ALT + RIGHT. */
+            /* On Linux, the keys depend on the desktop; see config.h. */
             else if (detected_host_os() == OS_LINUX) {
-                tap_code16(LCA(KC_RIGHT));
+                tap_code16(GESTURE_LINUX_DESKTOP_NEXT);
             }
             /* On MacOs, send Control + RIGHT. */
             else {
@@ -56,9 +64,9 @@ static void mouse_gesture(uint8_t direction) {
             if (detected_host_os() == OS_WINDOWS) {
                 tap_code16(LCG(KC_LEFT));
             }
-            /* On Linux, send CTRL + ALT + LEFT. */
+            /* On Linux, the keys depend on the desktop; see config.h. */
             else if (detected_host_os() == OS_LINUX) {
-                tap_code16(LCA(KC_LEFT));
+                tap_code16(GESTURE_LINUX_DESKTOP_PREV);
             }
             /* On MacOs, send Control + LEFT. */
             else {

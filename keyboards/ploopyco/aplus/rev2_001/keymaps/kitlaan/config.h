@@ -26,6 +26,14 @@
    OPTION_CHANGE_BLINK_TIMEOUT to keep the blinks easy to count. */
 #define DPI_BLINK_TIMEOUT 300
 
+/* The keys a Linux host gets for the east and west mouse gestures. These are
+   for PaperWM, which stacks workspaces vertically and leaves
+   Ctrl+Alt+Left/Right unbound, so the gestures move along its strip of windows
+   (switch-right/left). On plain GNOME, these keys tile the window to half the
+   screen. Remove both lines to get the Ploopy default, Ctrl+Alt+Right/Left. */
+#define GESTURE_LINUX_DESKTOP_NEXT LGUI(KC_RIGHT)
+#define GESTURE_LINUX_DESKTOP_PREV LGUI(KC_LEFT)
+
 /* Mode picking rolls the ball while the right knob is held. Four directions
    uses the cardinal rolls only and blinks at a diagonal; eight uses them all. */
 #define MODE_PICK_DIRECTIONS 4

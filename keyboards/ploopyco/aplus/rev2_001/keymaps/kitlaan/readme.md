@@ -18,6 +18,17 @@ qmk compile
 Every build prints an off-pin warning. That is correct here, because the
 firmware is not the pinned SHA.
 
+## Flash
+
+1. Hold down the bottom-left button (left click, not the knob).
+2. Connect the USB-C cable while you hold the button.
+3. The board shows as a USB drive. Copy
+   `ploopyco_aplus_rev2_001_kitlaan.uf2` onto it. The board then restarts.
+
+Bootmagic also resets the EEPROM, so the DPI, brightness and scroll
+toggles go back to their defaults. If bootmagic does not work, use the
+hardware trigger in the board's own `readme.md`.
+
 ## The sibling clone
 
 `../qmk_ploopy`, with `origin` at ploopyco/qmk_firmware and `upstream` at

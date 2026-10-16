@@ -1,0 +1,516 @@
+ploopyco/a+ ed6bc4231cc0c39f5f4c0ff82f0d5ad5d8ef7e6e, rebased onto the pinned qmk_firmware. See the kitlaan keymap readme.
+diff --git a/keyboards/ploopyco/aplus/config.h b/keyboards/ploopyco/aplus/config.h
+new file mode 100644
+index 0000000000..e5afd58dcd
+--- /dev/null
++++ b/keyboards/ploopyco/aplus/config.h
+@@ -0,0 +1,80 @@
++/* Copyright 2023 Colin Lam (Ploopy Corporation)
++ * Copyright 2020 Christopher Courtney, aka Drashna Jael're  (@drashna) <drashna@live.com>
++ * Copyright 2019 Sunjun Kim
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++
++#pragma once
++
++#define UNUSABLE_PINS \
++    { GP6, GP10, GP16, GP18, GP19, GP20, GP22, GP24, GP25, GP26, GP28 }
++
++#define POINTING_DEVICE_HIRES_SCROLL_ENABLE
++#define POINTING_DEVICE_HIRES_SCROLL_MULTIPLIER 120
++#define POINTING_DEVICE_HIRES_SCROLL_EXPONENT 0
++
++#define POINTING_DEVICE_INVERT_Y
++
++#define MOUSE_EXTENDED_REPORT
++#define WHEEL_EXTENDED_REPORT
++
++/* How far you have to move the cursor to register a gesture. */
++#define POINTING_DEVICE_GESTURES_THRESHOLD 40
++
++/* Uncomment these lines for pointing device acceleration. */
++//#define POINTING_DEVICE_ACCEL_TAKEOFF 2.0      // lower/higher value = curve takes off more smoothly/abruptly
++//#define POINTING_DEVICE_ACCEL_GROWTH_RATE 0.25 // lower/higher value = curve reaches its upper limit slower/faster
++//#define POINTING_DEVICE_ACCEL_OFFSET 2.2       // lower/higher value = acceleration kicks in earlier/later
++//#define POINTING_DEVICE_ACCEL_LIMIT 0.2        // lower limit of accel curve (minimum acceleration factor)
++
++#define PLOOPY_DRAGSCROLL_MOMENTARY
++#define PLOOPY_DRAGSCROLL_DIVISOR_H 1.0
++#define PLOOPY_DRAGSCROLL_DIVISOR_V 0.3
++#define PLOOPY_DRAGSCROLL_INVERT
++
++/* PMW3360 Settings */
++#define PMW33XX_LIFTOFF_DISTANCE 0x00
++#define PMW33XX_CS_PIN GP5
++#define SPI_SCK_PIN GP2
++#define SPI_MISO_PIN GP4
++#define SPI_MOSI_PIN GP3
++
++#define I2C_DRIVER I2CD0
++#define I2C1_SDA_PIN GP12
++#define I2C1_SCL_PIN GP13
++
++#define TMAG5273_D0_PWR_PIN GP9
++#define TMAG5273_D1_PWR_PIN GP14
++
++#define TMAG5273_D0_I2C_ADDRESS (0x50 << 1)
++#define TMAG5273_D1_I2C_ADDRESS (0x51 << 1)
++
++#define RGBLIGHT_SLEEP
++#define RGBLIGHT_LAYERS_RETAIN_VAL
++/* On-board lighting is configurable in 4 steps. This variable configures 
++   the step size in fractions of full brightness (out of 255). */
++#define RGBLIGHT_VAL_STEP 63
++#if RGBLIGHT_VAL_STEP > 63
++    #error "RGBLIGHT_VAL_STEP must be less than 64."
++#endif
++
++/* Define custom colours for effects */
++#define HSV_NAVBLUE             180, 220, 252
++#define HSV_NAVGREEN            66,  240, 252
++#define HSV_GESTUREYELLOW       10,  250, 252
++#define HSV_OPTIONCHANGED       240, 250, 252
++
++/* How long to blink for when an option-change button is pressed. */
++#define OPTION_CHANGE_BLINK_TIMEOUT 200 
+\ No newline at end of file
+diff --git a/keyboards/ploopyco/aplus/info.json b/keyboards/ploopyco/aplus/info.json
+new file mode 100644
+index 0000000000..f279c3de5d
+--- /dev/null
++++ b/keyboards/ploopyco/aplus/info.json
+@@ -0,0 +1,52 @@
++{
++    "keyboard_name": "Ploopy A+ Trackball",
++    "url": "www.ploopy.co",
++    "maintainer": "ploopyco",
++    "manufacturer": "Ploopy Corporation",
++    "processor": "RP2040",
++    "bootloader": "rp2040",
++    "bootloader_instructions": "Hold down the bottom left button while plugging USB cable in.",
++    "tags": ["trackball", "mouse", "scrollwheel"],
++    "usb": {
++        "vid": "0x5043",
++        "pid": "0x81DB",
++        "max_power": 100
++    },
++    "features": {
++        "bootmagic": true,
++        "extrakey": true,
++        "mousekey": true,
++        "nkro": true,
++        "pointing_device": true,
++        "rgblight": true,
++        "os_detection": true
++    },
++    "layouts": {
++        "LAYOUT": {
++            "layout": [
++                {"matrix": [0, 1], "label":"Top Left Left", "x":0, "y":0, "h":2},
++                {"matrix": [0, 2], "label":"Top Left", "x":1.25, "y":0, "h":1.25},
++                {"matrix": [0, 3], "label":"Top Right", "x":2.5, "y":0, "h":1.25},
++                {"matrix": [0, 4], "label":"Top Right Right", "x":3.75, "y":0, "h":2},
++                {"matrix": [0, 0], "label":"Bottom Left", "x":0, "y":2.25, "w":1.75, "h":2},
++                {"matrix": [0, 5], "label":"Bottom Right", "x":3, "y":2.25, "w":1.75, "h":2},
++                {"matrix": [0, 6], "label":"Knob Left", "x":0.5, "y":4.5, "w":1.75, "h":1.5},
++                {"matrix": [0, 7], "label":"Knob Right", "x":2.5, "y":4.5, "w":1.75, "h":1.5}
++            ]
++        }
++    },
++    "rgblight": {
++        "led_count": 2,
++        "default": {
++            "sat": 0,
++            "val": 0
++        },
++        "layers": {
++            "enabled": true,
++            "blink": true
++        },
++    },
++    "dynamic_keymap": {
++        "layer_count": 8
++    }
++}
+\ No newline at end of file
+diff --git a/keyboards/ploopyco/aplus/mcuconf.h b/keyboards/ploopyco/aplus/mcuconf.h
+new file mode 100644
+index 0000000000..2822a7f96e
+--- /dev/null
++++ b/keyboards/ploopyco/aplus/mcuconf.h
+@@ -0,0 +1,27 @@
++/* Copyright 2023 Colin Lam (Ploopy Corporation)
++ * Copyright 2020 Christopher Courtney, aka Drashna Jael're  (@drashna) <drashna@live.com>
++ * Copyright 2019 Sunjun Kim
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++
++#pragma once
++
++#include_next <mcuconf.h>
++
++#undef RP_I2C_USE_I2C0
++#define RP_I2C_USE_I2C0 TRUE
++
++#undef RP_I2C_USE_I2C1
++#define RP_I2C_USE_I2C1 FALSE
+diff --git a/keyboards/ploopyco/aplus/post_rules.mk b/keyboards/ploopyco/aplus/post_rules.mk
+new file mode 100644
+index 0000000000..cb6b8f52cf
+--- /dev/null
++++ b/keyboards/ploopyco/aplus/post_rules.mk
+@@ -0,0 +1,9 @@
++VPATH += keyboards/ploopyco/common
++SRC += tmag5273wheel.c
++I2C_DRIVER_REQUIRED = yes
++POINTING_DEVICE_DRIVER = pmw3360
++RGBLIGHT_ENABLE = yes
++
++## Uncomment to get debug output (also see keyboard_post_init_user() 
++## in keymap.c for more things to uncomment.)
++#CONSOLE_ENABLE = yes
+\ No newline at end of file
+diff --git a/keyboards/ploopyco/aplus/readme.md b/keyboards/ploopyco/aplus/readme.md
+new file mode 100644
+index 0000000000..22e735590b
+--- /dev/null
++++ b/keyboards/ploopyco/aplus/readme.md
+@@ -0,0 +1,38 @@
++
++# Ploopyco A+ Trackball
++
++It's a DIY, QMK-powered trackball!
++
++* Keyboard Maintainer: [PloopyCo](https://github.com/ploopyco)
++* Hardware Supported: RP2040
++* Hardware Availability: [Store](https://ploopy.co), [GitHub](https://github.com/ploopyco)
++
++Make example for this keyboard (after setting up your build environment):
++
++    qmk compile -kb ploopyco/aplus/rev2_001 -km default
++
++# Building Firmware
++
++See the [build environment setup](https://docs.qmk.fm/#/getting_started_build_tools) and the [make instructions](https://docs.qmk.fm/#/getting_started_make_guide) for more information. Brand new to QMK? Start with our [Complete Newbs Guide](https://docs.qmk.fm/#/newbs).
++
++# Triggering the Bootloader
++
++## Bootmagic
++
++In most cases, you should be able to trigger the bootloader by holding down the bottom left key (not the wheel) while plugging your A+ in. If you messed up the firmware badly enough, this won't work, in which case you should see the section below.
++
++## Hardware Trigger
++
++[Do you see those two golden holes in the board](https://ploopy.co/wp-content/uploads/2023/11/boot.jpg)? Those are called **vias**. They act exactly like a switch does. Right now, that switch is OFF. However, if you take a paperclip or a pair of metal tweezers and touch those two vias, the two vias will form an electrical connection. Effectively, that switch turns ON.
++
++Go ahead and connect the two vias, and then (while the vias are connected) plug in the A+ board into your computer.
++
++The computer should recognise that a mass storage device was just plugged in. Once this is done, you should be able to drag and drop files onto the A+ board, as if the board was a USB drive. Feel free to remove the tweezers or paperclip at this point.
++
++If you want to upload a new firmware file (a ".uf2" file, like "aplus_awesome_version.uf2" or something), just drag it into the folder, and it'll automatically install on the A+ board and restart itself, in normal operating mode. You're done!
++
++**TIP**: If your firmware is in some kind of strange state and uploading new firmware isn't fixing it, try uploading [a flash nuke](https://learn.adafruit.com/getting-started-with-raspberry-pi-pico-circuitpython/circuitpython#flash-resetting-uf2-3083182) to the A+ board before flashing the new firmware. It wipes the memory of the A+ board completely clean, which can help clear a few types of errors.
++
++# Customizing your Ploopy A+
++
++You can find customziation options [here](../readme.md).
+\ No newline at end of file
+diff --git a/keyboards/ploopyco/aplus/rev2_001/keyboard.json b/keyboards/ploopyco/aplus/rev2_001/keyboard.json
+new file mode 100644
+index 0000000000..8a0add7212
+--- /dev/null
++++ b/keyboards/ploopyco/aplus/rev2_001/keyboard.json
+@@ -0,0 +1,15 @@
++{
++    "usb": {
++        "device_version": "1.0.0"
++    },
++    "diode_direction": "COL2ROW",
++    "matrix_pins": {
++        "direct": [
++            ["GP7", "GP29", "GP27", "GP23", "GP21", "GP15", "GP8", "GP11"]
++        ]
++    },
++    "ws2812": {
++        "driver": "vendor",
++        "pin": "GP17"
++    }
++}
+diff --git a/keyboards/ploopyco/aplus/rev2_001/readme.md b/keyboards/ploopyco/aplus/rev2_001/readme.md
+new file mode 100644
+index 0000000000..adb91a462a
+--- /dev/null
++++ b/keyboards/ploopyco/aplus/rev2_001/readme.md
+@@ -0,0 +1,3 @@
++This is the R2.001+ version of Madromys. Future versions may have other features.
++
++See the [main readme](../readme.md) for more details.
+diff --git a/keyboards/ploopyco/common/tmag5273wheel.c b/keyboards/ploopyco/common/tmag5273wheel.c
+new file mode 100644
+index 0000000000..628aa8a80c
+--- /dev/null
++++ b/keyboards/ploopyco/common/tmag5273wheel.c
+@@ -0,0 +1,127 @@
++/* Copyright 2025 Colin Lam, Ploopy Corporation (contact@ploopy.co)
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++
++#include <stdint.h>
++#include <math.h>
++#include <stdbool.h>
++#include <stdlib.h>
++#include "printf.h"
++#include "tmag5273wheel.h"
++
++void tmag5273_init(void) {
++    i2c_init();
++}
++
++// Finds a TMAG5273 device on the I2C bus, and initializes it.
++// The device_addr argument sets the found device's address to
++// device_addr.
++void tmag5273_init_device(uint8_t device_addr) {
++    uint16_t addr;
++
++    if (i2c_ping_address(TMAG5273A1_I2C_ADDRESS, 100) == I2C_STATUS_SUCCESS) {
++        addr = TMAG5273A1_I2C_ADDRESS;
++    } else if (i2c_ping_address(TMAG5273B1_I2C_ADDRESS, 100) == I2C_STATUS_SUCCESS) {
++        addr = TMAG5273B1_I2C_ADDRESS;
++    } else if (i2c_ping_address(TMAG5273C1_I2C_ADDRESS, 100) == I2C_STATUS_SUCCESS) {
++        addr = TMAG5273C1_I2C_ADDRESS;
++    } else if (i2c_ping_address(TMAG5273D1_I2C_ADDRESS, 100) == I2C_STATUS_SUCCESS) {
++        addr = TMAG5273D1_I2C_ADDRESS;
++    } else {
++        // printf("No TMAG5273 device found; exiting\n");
++        exit(1);
++    }
++
++    // Give found device a new device address
++    uint8_t i2c_address = device_addr | 0x1;
++    i2c_write_register(addr, REG_I2C_ADDRESS, &i2c_address, 1, 100);
++
++    // 32x oversampling
++    uint8_t device_config_1 = 0b101 << 2;
++
++    // Low noise mode
++    // Operating Mode: Continuous Measure Mode
++    uint8_t device_config_2 = (0b1 << 4) | (0b10);
++
++    // X and Y channel enabled
++    uint8_t sensor_config_1 = 0x30;
++
++    // Enable X and Y angle calculation
++    // X and Y magnetic ranges at +-80mT
++    uint8_t sensor_config_2 = (0x1 << 2) | (0b10);
++
++    uint8_t int_config = 0x1;
++
++    i2c_write_register(device_addr, REG_DEVICE_CONFIG_1, &device_config_1, 1, 100);
++    i2c_write_register(device_addr, REG_DEVICE_CONFIG_2, &device_config_2, 1, 100);
++    i2c_write_register(device_addr, REG_SENSOR_CONFIG_1, &sensor_config_1, 1, 100);
++    i2c_write_register(device_addr, REG_SENSOR_CONFIG_2, &sensor_config_2, 1, 100);
++    i2c_write_register(device_addr, REG_INT_CONFIG_1, &int_config, 1, 100);
++}
++
++uint16_t tmag5273_get_angle(uint8_t device_addr) {
++    uint8_t data[2];
++    i2c_read_register(device_addr, REG_ANGLE_RESULT_MSB, data, 2, 100);
++    uint16_t rawangle = (data[0] << 8) | data[1];
++    //printf("Angle: %d\n", rawangle);
++    return rawangle;
++}
++
++/* Calculate the distance between two wheel positions. Takes into account wraparound and the
++   size of the wheel. Positive values are clockwise distances, negative values CCW. */
++int16_t calculate_wheel_delta( uint16_t wheel_newangle, uint16_t wheel_oldangle ) {
++    int16_t wheel_delta = (int16_t)(wheel_newangle - wheel_oldangle);
++    
++    if (wheel_delta > (TMAG5273_MAX_SENSOR_VALUE / 2)) {
++        wheel_delta -= TMAG5273_MAX_SENSOR_VALUE;
++    } else if (wheel_delta < -(TMAG5273_MAX_SENSOR_VALUE / 2)) {
++        wheel_delta += TMAG5273_MAX_SENSOR_VALUE;
++    }
++
++    return wheel_delta;
++}
++
++/* Returns the angular distance bewteen wheel_rawangle and _wheel_deadzone_center. Also updates 
++   wheel_deadzone_center whenever there's a reason to move the deadzone. */
++int16_t calculate_deadzone_distance( uint16_t wheel_rawangle, uint16_t* wheel_deadzone_center ) {
++    uint16_t wheel_deadzone_lower = ( wheel_rawangle - 
++                                          TMAG5273_WHEEL_DEADZONE + 
++                                          TMAG5273_MAX_SENSOR_VALUE) 
++                                        % TMAG5273_MAX_SENSOR_VALUE;
++    uint16_t wheel_deadzone_upper = ( wheel_rawangle + 
++                                          TMAG5273_WHEEL_DEADZONE + 
++                                          TMAG5273_MAX_SENSOR_VALUE) 
++                                        % TMAG5273_MAX_SENSOR_VALUE;
++
++    int16_t wheel_deadzone_distance = ( wheel_rawangle - 
++                                  *wheel_deadzone_center +
++                                  TMAG5273_MAX_SENSOR_VALUE)
++                                % TMAG5273_MAX_SENSOR_VALUE;
++        
++    if (wheel_deadzone_distance > (TMAG5273_MAX_SENSOR_VALUE / 2)) {
++        wheel_deadzone_distance -= TMAG5273_MAX_SENSOR_VALUE;
++    } else if (wheel_deadzone_distance < -(TMAG5273_MAX_SENSOR_VALUE / 2)) {
++        wheel_deadzone_distance += TMAG5273_MAX_SENSOR_VALUE;
++    }
++
++    if( wheel_deadzone_distance > TMAG5273_WHEEL_DEADZONE ) {
++        *wheel_deadzone_center = wheel_deadzone_lower;
++    }
++    if( wheel_deadzone_distance < -TMAG5273_WHEEL_DEADZONE ) {
++        *wheel_deadzone_center = wheel_deadzone_upper;
++    }
++
++    return wheel_deadzone_distance;
++}
+\ No newline at end of file
+diff --git a/keyboards/ploopyco/common/tmag5273wheel.h b/keyboards/ploopyco/common/tmag5273wheel.h
+new file mode 100644
+index 0000000000..6b04d35d7e
+--- /dev/null
++++ b/keyboards/ploopyco/common/tmag5273wheel.h
+@@ -0,0 +1,105 @@
++/* Copyright 2025 Colin Lam, Ploopy Corporation (contact@ploopy.co)
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++
++#pragma once
++
++#include <stdint.h>
++#include "i2c_master.h"
++
++#define TMAG5273A1_I2C_ADDRESS (0x35 << 1)
++#define TMAG5273B1_I2C_ADDRESS (0x22 << 1)
++#define TMAG5273C1_I2C_ADDRESS (0x78 << 1)
++#define TMAG5273D1_I2C_ADDRESS (0x44 << 1)
++
++#define TMAG5273_MAX_SENSOR_VALUE 5760
++
++/* This value MUST be larger than 32 to function properly. */
++#define TMAG5273_WHEEL_DEADZONE 128
++#if TMAG5273_WHEEL_DEADZONE < 32
++    #error "TMAG5273_WHEEL_DEADZONE must be greater than 32."
++#endif
++// The speed divisor decreases the speed. 1 is base speed; 2 is divided by 2,
++// 3 is divided by 3, and so forth. For best results, make sure that
++// TMAG5273_WHEEL_SPEED_DIV is an integer divisor of
++// TMAG5273_WHEEL_DEADZONE (i.e. 3 is an integer divisor of 12, but
++// 5 is not).
++#define TMAG5273_VERTICAL_WHEEL_SPEED_DIV 4
++
++/* Use different divisors for horizontal and vertical scrolls because they 
++   get used for different applications. */
++#define TMAG5273_HORIZONAL_WHEEL_SPEED_DIV 2
++
++/* This value determines how far apart scroll wheel "ticks" are when
++   emulating low-res scrolling. Tick units are in fractions of 
++   TMAG5273_MAX_SENSOR_VALUE, which represents one physical revolution
++   of the wheel. 480 = 12 ticks per revolution. */
++#define TMAG5273_LOWRES_TICK_SIZE 480
++
++/* This value is the same as TMAG5273_LOWRES_TICK_SIZE but applies to
++   when the wheel is used to send left/right arrow keypresses for 
++   horizontal scrolling. */
++#define TMAG5273_HORIZ_SCROLL_TICK_SIZE 360
++
++/* This value is the same as TMAG5273_LOWRES_TICK_SIZE but applies to
++   when the wheel is used to send up/down arrow keypresses for 
++   vertical scrolling. */
++#define TMAG5273_VERT_SCROLL_TICK_SIZE 640
++
++/* This value is the same as TMAG5273_LOWRES_TICK_SIZE but applies to
++   when the wheel is used to adjust the volume. */
++#define TMAG5273_VOLUME_SCROLL_TICK_SIZE 200
++
++/* The time (in ms) to wait before shifting the deadzone a little to
++   prevent spurious scroll events. */
++#define TMAG5273_DEADZONE_PROTECTOR_TIMEOUT 512
++
++
++#define REG_DEVICE_CONFIG_1         0x00
++#define REG_DEVICE_CONFIG_2         0x01
++#define REG_SENSOR_CONFIG_1         0x02
++#define REG_SENSOR_CONFIG_2         0x03
++#define REG_X_THR_CONFIG            0x04
++#define REG_Y_THR_CONFIG            0x05
++#define REG_Z_THR_CONFIG            0x06
++#define REG_T_CONFIG                0x07
++#define REG_INT_CONFIG_1            0x08
++#define REG_MAG_GAIN_CONFIG         0x09
++#define REG_MAG_OFFSET_CONFIG_1     0x0A
++#define REG_MAG_OFFSET_CONFIG_2     0x0B
++#define REG_I2C_ADDRESS             0x0C
++#define REG_DEVICE_ID               0x0D
++#define REG_MANUFACTURER_ID_LSB     0x0E
++#define REG_MANUFACTURER_ID_MSB     0x0F
++#define REG_T_MSB_RESULT            0x10
++#define REG_T_LSB_RESULT            0x11
++#define REG_X_MSB_RESULT            0x12
++#define REG_X_LSB_RESULT            0x13
++#define REG_Y_MSB_RESULT            0x14
++#define REG_Y_LSB_RESULT            0x15
++#define REG_Z_MSB_RESULT            0x16
++#define REG_Z_LSB_RESULT            0x17
++#define REG_CONV_STATUS             0x18
++#define REG_ANGLE_RESULT_MSB        0x19
++#define REG_ANGLE_RESULT_LSB        0x1A
++#define REG_MAGNITUDE_RESULT        0x1B
++#define REG_DEVICE_STATUS           0x1C
++
++void tmag5273_init(void);
++void tmag5273_init_device(uint8_t);
++uint16_t tmag5273_get_angle(uint8_t);
++
++int16_t calculate_wheel_delta( uint16_t wheel_rawangle, uint16_t wheel_current_position );
++int16_t calculate_deadzone_distance( uint16_t wheel_rawangle, uint16_t* wheel_deadzone_center );

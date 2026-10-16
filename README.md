@@ -55,8 +55,9 @@ Do not run `qmk config user.qmk_home=...` through the shim. It'll touch
 Reminder: a new *keyboard* lives in `qmk_firmware/keyboards`, not here. Either
 point the submodule at a fork with `git submodule set-url`, or leave the pin
 alone and build that one board from a sibling clone through
-`QMK_FIRMWARE_ROOT`. `keyboards/ploopyco/aplus` takes the second route; its
-keymap readme says why.
+`QMK_FIRMWARE_ROOT`. `keyboards/ploopyco/aplus` takes the second route for a
+local build, and CI applies `ci/patches/ploopyco-aplus.patch` to the pin
+instead; its keymap readme says why.
 
 ### Cookbook
 

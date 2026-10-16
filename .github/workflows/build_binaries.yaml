@@ -23,14 +23,29 @@ jobs:
     name: 'QMK Userspace Build'
     uses: qmk/.github/.github/workflows/qmk_userspace_build.yml@main
     # NOTE: Using submodule to pin the version
-    #with:
-    #  qmk_repo: qmk/qmk_firmware
-    #  qmk_ref: master
+    with:
+      # A branch whose keyboard is not in upstream yet carries it as a diff
+      # against the pinned submodule. main has none, so this does nothing there.
+      # safe.directory: the container user does not own the checkout.
+      # nowarn: the patches carry upstream files as they are, trailing
+      # whitespace included.
+      preparation_command: |
+        for p in ci/patches/*.patch; do
+          [ -e "$p" ] || continue
+          echo "Applying $p"
+          git -c safe.directory='*' -C qmk_firmware apply --whitespace=nowarn "$GITHUB_WORKSPACE/$p" || exit 1
+        done
 
   publish:
     name: 'QMK Userspace Publish'
     uses: qmk/.github/.github/workflows/qmk_userspace_publish.yml@main
     # The reusable workflow deletes and recreates the `latest` release, with no
     # ref check of its own. Without this, a branch push replaces main's release.
-    if: always() && !cancelled() && github.ref == 'refs/heads/main' && needs.targets.outputs.any == 'true'
+    # Other branches publish to their own tag only when the RELEASE_BRANCHES
+    # repo variable (a JSON list) names them, so feature branches only build.
+    if: >-
+      always() && !cancelled() && needs.targets.outputs.any == 'true' &&
+      (github.ref == 'refs/heads/main' || contains(fromJSON(vars.RELEASE_BRANCHES || '[]'), github.ref_name))
     needs: [build, targets]
+    with:
+      release_name: ${{ github.ref == 'refs/heads/main' && 'latest' || format('latest-{0}', github.ref_name) }}

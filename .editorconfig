@@ -15,6 +15,10 @@ insert_final_newline = true
 trim_trailing_whitespace = false
 indent_size = 4
 
+# A trimmed patch no longer applies.
+[*.patch]
+trim_trailing_whitespace = false
+
 [{qmk,*.py}]
 charset = utf-8
 max_line_length = 200

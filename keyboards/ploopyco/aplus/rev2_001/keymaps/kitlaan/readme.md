@@ -2,8 +2,8 @@
 
 The A+ is not in upstream `qmk_firmware` yet. It lives on the `ploopyco/a+`
 branch of [ploopyco/qmk_firmware](https://github.com/ploopyco/qmk_firmware).
-This keymap therefore builds against a sibling clone, not the pinned submodule,
-and it is absent from `qmk.json` because CI cannot build it.
+A local build uses a sibling clone. CI uses the pinned submodule, the same one
+as `main`, and applies `ci/patches/ploopyco-aplus.patch` to it first.
 
 ## Build
 
@@ -50,6 +50,32 @@ That last step is not optional. The A+ commit records a gitlink at
 `modules/drashna` with no `.gitmodules` entry, and git then aborts every
 recursive submodule command in the repository. The modules come from
 `modules/drashna` in this userspace instead.
+
+## CI
+
+The CI patch is the net diff of that branch, so regenerate it each time you
+rebuild the branch:
+
+```bash
+{
+  echo "ploopyco/a+ $(git -C ../qmk_ploopy rev-parse origin/ploopyco/a+), rebased onto the pinned qmk_firmware. See the kitlaan keymap readme."
+  git -C ../qmk_ploopy diff $(git rev-parse HEAD:qmk_firmware) kitlaan/aplus-on-pin
+} > ci/patches/ploopyco-aplus.patch
+```
+
+It is a plain diff, not `format-patch`, because the branch adds and then drops
+the `modules/drashna` gitlink, and only the net result applies cleanly.
+
+Nothing watches Ploopy for updates. To check by hand, compare
+`git -C ../qmk_ploopy ls-remote origin ploopyco/a+` with the SHA on the first
+line of the patch.
+
+A push builds the branch. It publishes the `latest-<branch>` release only while
+the `RELEASE_BRANCHES` repo variable names the branch:
+
+```bash
+gh variable set RELEASE_BRANCHES --body '["ploopyco-aplus"]'
+```
 
 ## Modes
 
@@ -110,9 +136,9 @@ resolves where the keymap is compiled.
 ## When upstream carries the A+
 
 1. Bump the `qmk_firmware` submodule to a SHA with `keyboards/ploopyco/aplus`.
-2. Delete `keyboards/ploopyco/aplus/.envrc`.
-3. `qmk userspace-add -kb ploopyco/aplus/rev2_001 -km kitlaan`, and remove the
-   note in `qmk.json`.
+2. Delete `keyboards/ploopyco/aplus/.envrc` and `ci/patches/ploopyco-aplus.patch`.
+   The target is already in `qmk.json`.
+3. Merge to `main`, and remove the branch from `RELEASE_BRANCHES`.
 4. Remove the `modules/drashna` submodule once upstream supplies
    `drashna/pointing_device_gestures`. The userspace copy shadows the
    firmware's, so a stale copy here wins silently.

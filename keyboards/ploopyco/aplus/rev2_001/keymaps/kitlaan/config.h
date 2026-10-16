@@ -42,3 +42,7 @@
 /* How long the right knob must be held before it stops counting as a tap. The
    left knob has no tap action, so it raises LAYER_KNOB_HOLD at once. */
 #define MODE_PICK_HOLD_TERM 250
+
+/* Turn the LEDs off after this long with no input, in ms. Remove it to keep
+   them on. */
+#define LED_IDLE_TIMEOUT (60 * 60 * 1000UL)

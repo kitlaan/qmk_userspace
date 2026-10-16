@@ -38,14 +38,48 @@ jobs:
 
   publish:
     name: 'QMK Userspace Publish'
-    uses: qmk/.github/.github/workflows/qmk_userspace_publish.yml@main
-    # The reusable workflow deletes and recreates the `latest` release, with no
-    # ref check of its own. Without this, a branch push replaces main's release.
-    # Other branches publish to their own tag only when the RELEASE_BRANCHES
-    # repo variable (a JSON list) names them, so feature branches only build.
+    # Our own job, not qmk_userspace_publish.yml: that one hard-codes the
+    # release title and always makes a full release, so a branch release took
+    # the "Latest" badge from main's.
+    # Without the ref check, a branch push replaces main's release. Other
+    # branches publish to their own tag only when the RELEASE_BRANCHES repo
+    # variable (a JSON list) names them, so feature branches only build.
     if: >-
       always() && !cancelled() && needs.targets.outputs.any == 'true' &&
       (github.ref == 'refs/heads/main' || contains(fromJSON(vars.RELEASE_BRANCHES || '[]'), github.ref_name))
     needs: [build, targets]
-    with:
-      release_name: ${{ github.ref == 'refs/heads/main' && 'latest' || format('latest-{0}', github.ref_name) }}
+    runs-on: ubuntu-latest
+    env:
+      IS_MAIN: ${{ github.ref == 'refs/heads/main' }}
+      TAG: ${{ github.ref == 'refs/heads/main' && 'latest' || format('latest-{0}', github.ref_name) }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-tags: true
+
+      - name: Download binaries
+        uses: actions/download-artifact@v8
+        with:
+          name: Firmware
+
+      - name: Delete release
+        run: gh release delete "$TAG" --cleanup-tag || true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Generate release
+        uses: softprops/action-gh-release@v3
+        with:
+          token: ${{ github.token }}
+          name: QMK Firmware (${{ github.ref_name }})
+          tag_name: ${{ env.TAG }}
+          # The tag is new each time, and without this it is made from the
+          # default branch, so a branch release shows main's commit.
+          target_commitish: ${{ github.sha }}
+          prerelease: ${{ env.IS_MAIN != 'true' }}
+          make_latest: ${{ env.IS_MAIN == 'true' }}
+          fail_on_unmatched_files: false
+          files: |
+            **/*.hex
+            **/*.bin
+            **/*.uf2

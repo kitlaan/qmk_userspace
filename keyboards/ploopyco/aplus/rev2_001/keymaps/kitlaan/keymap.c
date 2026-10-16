@@ -189,6 +189,26 @@ void matrix_scan_user(void) {
     mode_scan();
 }
 
+/* RGBLIGHT_SLEEP only covers a USB suspend, so the LEDs would stay on all day
+   beside an awake host. The activity time counts ball and wheel motion as
+   well as keys. rgblight_disable_noeeprom() blanks the layer colours too,
+   since RGBLIGHT_LAYERS_OVERRIDE_RGB_OFF is not set. */
+#ifdef LED_IDLE_TIMEOUT
+void housekeeping_task_user(void) {
+    static bool leds_idle = false;
+
+    if (last_input_activity_elapsed() > LED_IDLE_TIMEOUT) {
+        if (!leds_idle) {
+            rgblight_disable_noeeprom();
+            leds_idle = true;
+        }
+    } else if (leds_idle) {
+        rgblight_enable_noeeprom();
+        leds_idle = false;
+    }
+}
+#endif
+
 bool process_record_user(uint16_t keycode, keyrecord_t* record) {
     /* Both knobs belong to the knob-hold machine in modes.c. */
     if (mode_process_record(keycode, record)) {

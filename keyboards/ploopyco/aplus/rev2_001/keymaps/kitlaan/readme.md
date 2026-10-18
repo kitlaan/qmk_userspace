@@ -125,6 +125,7 @@ label:
 | Tag | Where | Labels |
 | --- | --- | --- |
 | `/* @doc: ... */` | after a member of `enum my_keycodes` | that keycode |
+| `/* @doc(hold): ... */` | after a member of `enum my_keycodes` | that keycode while held; with no `@doc:`, a press alone does nothing |
 | `/* @doc: ... */` | above a `.tap` handler | the right knob tap in that mode |
 | `/* @doc(detail): ... */` | above a keycode or a `.tap` handler | a second, smaller line under its label |
 | `/* @doc: ... */` | above a layer in `keymaps[]` | the page title |

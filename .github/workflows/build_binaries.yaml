@@ -44,7 +44,7 @@ jobs:
     name: 'Keymap Cheat Sheets'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       # A keymap's cheatsheet.py fails on a control with no label, so this
       # also checks the labels on branches that do not publish. The stock HSV
       # colours are in the firmware's color.h; one file at the pinned SHA is
@@ -60,7 +60,7 @@ jobs:
             echo "Running $s"
             python3 "$s" --strict || exit 1
           done
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Cheatsheets
           path: '*_cheatsheet.html'

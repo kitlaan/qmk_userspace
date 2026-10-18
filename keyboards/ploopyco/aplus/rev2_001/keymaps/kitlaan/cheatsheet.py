@@ -177,6 +177,7 @@ class Mode:
 class Keymap:
     keycode_labels: dict = field(default_factory=dict)
     keycode_details: dict = field(default_factory=dict)
+    keycode_holds: dict = field(default_factory=dict)
     layers: list = field(default_factory=list)
     modes: list = field(default_factory=list)
     gestures: dict = field(default_factory=dict)
@@ -193,14 +194,16 @@ class Keymap:
 
 def parse_keycodes(text):
     body = braced_block(text, "enum my_keycodes", "kitlaan.h")
-    labels, details = {}, {}
+    labels, details, holds = {}, {}, {}
     for name, _, tags in parse_enum_members(body):
-        if "" not in tags:
-            raise CheatsheetError(f"kitlaan.h: {name} has no `/* @doc: ... */` tag")
-        labels[name] = tags[""]
-        if "detail" in tags:
-            details[name] = tags["detail"]
-    return labels, details
+        # A key that only acts while held has a hold tag and may have no label.
+        if "" not in tags and "hold" not in tags:
+            raise CheatsheetError(f"kitlaan.h: {name} has no `/* @doc: ... */` or `/* @doc(hold): ... */` tag")
+        labels[name] = tags.get("")
+        for key, table in (("detail", details), ("hold", holds)):
+            if key in tags:
+                table[name] = tags[key]
+    return labels, details, holds
 
 
 def parse_layers(text, layer_indices):
@@ -322,6 +325,29 @@ def hsv_defines():
     return defines
 
 
+def qmk_hsv_to_rgb(h, s, v):
+    """hsv_to_rgb_impl() in quantum/color.c, integer steps and all."""
+    region = h * 6 // 255
+    remainder = (h * 2 - region * 85) * 3
+    p = (v * (255 - s)) >> 8
+    q = (v * (255 - ((s * remainder) >> 8))) >> 8
+    t = (v * (255 - ((s * (255 - remainder)) >> 8))) >> 8
+    return {0: (v, t, p), 1: (q, v, p), 2: (p, v, t), 3: (p, q, v), 4: (t, p, v), 5: (v, p, q), 6: (v, t, p)}[region]
+
+
+def led_colour(h, s, v):
+    """Return a CSS colour that looks like the LED does.
+
+    The LED duty cycle is linear light, so gamma-encode it as screens and
+    printers expect. Without this, HSV_GESTUREYELLOW prints red-brown. The
+    lightness cap keeps pale results such as NAVGREEN legible as text on white.
+    """
+    rgb = [(c / 255) ** (1 / 2.2) for c in qmk_hsv_to_rgb(h, s, v)]
+    hue, light, sat = colorsys.rgb_to_hls(*rgb)
+    r, g, b = colorsys.hls_to_rgb(hue, min(light, 0.45), sat)
+    return f"#{round(r * 255):02x}{round(g * 255):02x}{round(b * 255):02x}"
+
+
 def parse_colours(keymap_c, kitlaan_h):
     """Return {colour enum name: CSS colour or None}.
 
@@ -339,9 +365,7 @@ def parse_colours(keymap_c, kitlaan_h):
         if hsv is None:
             colours[name] = None
             continue
-        # QMK scales all three to 0-255. Full value prints too pale, so dim it.
-        r, g, b = colorsys.hsv_to_rgb(hsv[0] / 255, hsv[1] / 255, min(hsv[2] / 255, 0.8))
-        colours[name] = f"#{round(r * 255):02x}{round(g * 255):02x}{round(b * 255):02x}"
+        colours[name] = led_colour(*hsv)
     return colours
 
 
@@ -352,7 +376,7 @@ def parse():
     keymap_c = sources["keymap.c"]
 
     keymap = Keymap()
-    keymap.keycode_labels, keymap.keycode_details = parse_keycodes(kitlaan_h)
+    keymap.keycode_labels, keymap.keycode_details, keymap.keycode_holds = parse_keycodes(kitlaan_h)
     keymap.layers = parse_layers(keymap_c, enum_values(kitlaan_h, "LAYER_NAV_RIGHT_HANDED", "kitlaan.h"))
     mode_indices = enum_values(modes_h, "MODE_BASE", "modes.h")
     keymap.modes = parse_modes(keymap_c, sources, mode_indices)
@@ -364,7 +388,7 @@ def parse():
 
 
 def key_label(keymap, layer, keycode):
-    """Return the label of keycode on layer, or None for a key that does nothing."""
+    """Return what a press of keycode on layer does, or None when a press does nothing."""
     if keycode in layer.tags:
         return layer.tags[keycode]
     if keycode in NO_ACTION:
@@ -428,7 +452,14 @@ def layer_controls(keymap, layer, base=None):
                 controls.append(Control(position, press="(held)"))
                 continue
             source, keycode = base, base.keys[position]
-        controls.append(Control(position, key_label(keymap, source, keycode), keymap.keycode_details.get(keycode)))
+        controls.append(
+            Control(
+                position,
+                key_label(keymap, source, keycode),
+                keymap.keycode_details.get(keycode),
+                keymap.keycode_holds.get(keycode),
+            )
+        )
     return controls
 
 
@@ -443,9 +474,8 @@ def build_pages(keymap):
         for control in controls:
             if control.position.startswith("knob"):
                 control.turn = wheels[control.position.removeprefix("knob_")]
-            # PKC_MODE is a tap-or-hold key, and the tap belongs to the mode.
+            # PKC_MODE's tap belongs to the mode.
             if layer.keys[control.position] == "PKC_MODE":
-                control.hold = control.press
                 control.press, control.detail = mode.tap, mode.tap_detail
         pages.append(Page(layer_title(layer), keymap.colours.get(mode.colour), controls))
 
@@ -519,7 +549,7 @@ BUTTONS = {
     "bl": (134, 290, 30, 74),
     "br": (276, 290, 30, 74),
 }
-KNOBS = {"knob_left": (192, 398), "knob_right": (248, 398)}
+KNOBS = {"knob_left": (192, 378), "knob_right": (248, 378)}
 KNOB_R = 24
 
 # Where each button's label goes: the text anchor point, its alignment, which
@@ -600,9 +630,11 @@ def draw_controls(page):
     for control in page.controls:
         if control.position in CALLOUTS:
             (x, y), anchor, grow, (bx, by) = CALLOUTS[control.position]
-            if control.press is None:
+            if control.press is None and control.hold is None:
                 continue
-            runs = [(control.press, LABEL_SIZE, 700, INK, 15)]
+            runs = [(control.press, LABEL_SIZE, 700, INK, 15)] if control.press else []
+            if control.hold:
+                runs.append((f"Hold: {control.hold}", LABEL_SIZE, 700, INK, 15))
             if control.detail:
                 runs.append((control.detail, DETAIL_SIZE, 400, GREY, 22))
             out += text_block(x, y, anchor, grow, runs)

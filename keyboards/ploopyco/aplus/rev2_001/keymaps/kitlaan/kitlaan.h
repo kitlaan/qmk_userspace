@@ -52,8 +52,8 @@ enum my_keycodes {
     PKC_TGL_DRAG_SCRL, /* @doc: Drag scroll type */
     /* @doc(detail): One long blink for on, two for off. A replug turns it back on. */
     PKC_TGL_ACCEL,   /* @doc: Acceleration */
-    PKC_GESTURE,     /* @doc: Hold and roll for a gesture */
-    PKC_MODE,        /* @doc: Hold and roll to pick a mode */
+    PKC_GESTURE,     /* @doc(hold): Roll for a gesture */
+    PKC_MODE,        /* @doc(hold): Roll to pick a mode */
     PKC_DRAG_SCROLL, /* @doc: Drag scroll */
     /* @doc(detail): Four steps, then back to the dimmest. */
     PKC_ADJUST_LED_BRIGHTNESS, /* @doc: LED brightness */

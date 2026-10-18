@@ -44,6 +44,13 @@
    tell a tap from a gesture; past this, a release with no roll does nothing. */
 #define KNOB_HOLD_TERM 250
 
+/* LED feedback while a knob holds the ball, in ms. A gesture pulses white once
+   its roll is long enough to fire. The picker shows mostly purple, with a short
+   flash of the colour of the mode that the roll points at. */
+#define GESTURE_PULSE_MS 150
+#define MODE_PICK_PREVIEW_LONG_MS 600
+#define MODE_PICK_PREVIEW_SHORT_MS 200
+
 /* How long Fusion mode holds a modifier before it presses the middle button,
    in ms. See fusion_drag() in keymap.c. */
 #define FUSION_MOD_LEAD_MS 20

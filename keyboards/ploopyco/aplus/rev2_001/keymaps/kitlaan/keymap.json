@@ -1,6 +1,7 @@
 {
     "modules": [
         "drashna/pointing_device_accel",
+        "kitlaan/ball_track",
         "drashna/pointing_device_gestures"
     ],
     "config": {

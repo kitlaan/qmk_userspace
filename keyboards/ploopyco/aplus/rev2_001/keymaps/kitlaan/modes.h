@@ -66,6 +66,7 @@ void          mode_set(uint8_t mode);
 bool mode_process_record(uint16_t keycode, keyrecord_t* record);
 void mode_scan(void);
 void mode_task(void);
+void mode_feedback_task(void);
 
 /* gestures.c hands a roll over when the right knob owns the ball, and
    reports any other gesture so that it does not also count as a tap. */

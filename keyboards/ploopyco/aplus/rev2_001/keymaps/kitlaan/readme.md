@@ -96,6 +96,12 @@ Fusion 360.
 Hold the right knob and roll the ball to pick a mode. Release without rolling
 and it returns to the previous mode, which is the quick way back and forth.
 A roll onto a direction that no mode claims blinks instead of switching.
+
+The LEDs show what a release would do. While the roll points at a mode, the
+picker's purple flashes that mode's colour, and a gesture pulses white once
+its roll is long enough to fire. The keymap sees the roll through
+`modules/kitlaan/ball_track`, which sits just before the gestures module in
+`keymap.json`: that module zeroes the motion for everything after it.
 `MODE_PICK_DIRECTIONS` in `config.h` chooses four cardinal rolls or all eight;
 the cardinals keep their modes either way.
 

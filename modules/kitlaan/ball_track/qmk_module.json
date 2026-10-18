@@ -1,0 +1,8 @@
+{
+    "module_name": "Ball Track",
+    "maintainer": "kitlaan",
+    "license": "GPL-2.0-or-later",
+    "features": {
+        "pointing_device": true
+    }
+}

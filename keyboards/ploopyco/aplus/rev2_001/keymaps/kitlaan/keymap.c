@@ -35,6 +35,9 @@ const rgblight_segment_t PROGMEM fusion_layer_colour[] =            RGBLIGHT_LAY
 const rgblight_segment_t PROGMEM control_layer_colour[] =           RGBLIGHT_LAYER_SEGMENTS( {0, 2, HSV_RED} );
 const rgblight_segment_t PROGMEM mode_pick_layer_colour[] =         RGBLIGHT_LAYER_SEGMENTS( {0, 2, HSV_PURPLE} );
 const rgblight_segment_t PROGMEM gesture_layer_colour[] =           RGBLIGHT_LAYER_SEGMENTS( {0, 2, HSV_GESTUREYELLOW} );
+/* Its own layer, not the option-changed one, so that ending the pulse cannot
+   cut short the blink that follows a gesture. */
+const rgblight_segment_t PROGMEM gesture_pulse_layer_colour[] =     RGBLIGHT_LAYER_SEGMENTS( {0, 2, HSV_WHITE} );
 /* White, not the board's HSV_OPTIONCHANGED: that pink-red is hard to see as a
    blink over the red control layer, where most option blinks happen. */
 const rgblight_segment_t PROGMEM option_changed_layer_colour[] =    RGBLIGHT_LAYER_SEGMENTS( {0, 2, HSV_WHITE} );
@@ -48,6 +51,7 @@ const rgblight_segment_t* const PROGMEM my_rgb_layers[] = RGBLIGHT_LAYERS_LIST(
     control_layer_colour,
     mode_pick_layer_colour,
     gesture_layer_colour,
+    gesture_pulse_layer_colour,
     option_changed_layer_colour
 );
 // clang-format on
@@ -248,7 +252,7 @@ void matrix_scan_user(void) {
    well as keys. rgblight_disable_noeeprom() blanks the layer colours too,
    since RGBLIGHT_LAYERS_OVERRIDE_RGB_OFF is not set. */
 #ifdef LED_IDLE_TIMEOUT
-void housekeeping_task_user(void) {
+static void led_idle_task(void) {
     static bool leds_idle = false;
 
     if (last_input_activity_elapsed() > LED_IDLE_TIMEOUT) {
@@ -262,6 +266,13 @@ void housekeeping_task_user(void) {
     }
 }
 #endif
+
+void housekeeping_task_user(void) {
+    mode_feedback_task();
+#ifdef LED_IDLE_TIMEOUT
+    led_idle_task();
+#endif
+}
 
 bool process_record_user(uint16_t keycode, keyrecord_t* record) {
     /* Both knobs belong to the knob-hold machine in modes.c. */

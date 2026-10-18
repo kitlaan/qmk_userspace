@@ -24,6 +24,9 @@
    introspection header. */
 #include "community_modules_introspection.h"
 #include "pointing_device_gestures.h"
+#include "ball_track.h"
+
+#include <math.h>
 
 #include "kitlaan.h"
 #include "modes.h"
@@ -168,6 +171,7 @@ void mode_scan(void) {
         if (!pointing_device_gestures_is_started()) {
             mode_pick_session = true;
             pointing_device_gestures_start();
+            ball_track_reset();
             rgblight_set_layer_state(MODE_PICK_LAYER_COLOUR, true);
         }
     }
@@ -222,6 +226,7 @@ bool mode_process_record(uint16_t keycode, keyrecord_t* record) {
                 if (!pointing_device_gestures_is_started()) {
                     /* Send correct gesture mode activation based on preference. */
                     pointing_device_gestures_start();
+                    ball_track_reset();
                     rgblight_set_layer_state(GESTURE_LAYER_COLOUR, true);
                 }
                 knob_hold_layer_update();
@@ -267,5 +272,62 @@ bool mode_process_record(uint16_t keycode, keyrecord_t* record) {
             }
         default:
             return false;
+    }
+}
+
+/* The direction that a release would fire, or NUM_GESTURE_DIRECTIONS while the
+   roll is still too short. The maths copies the trigger in
+   pointing_device_gestures.c, so that the preview and the release agree. The
+   module declares pointing_device_gestures_get_threshold() but does not define
+   it, so this reads the macro the module starts from; nothing here changes it. */
+static uint8_t ball_direction(void) {
+    float x = ball_track_x();
+    float y = ball_track_y();
+
+    if (sqrtf(x * x + y * y) < POINTING_DEVICE_GESTURES_THRESHOLD) {
+        return NUM_GESTURE_DIRECTIONS;
+    }
+
+    int16_t id = (int16_t)(180 * atan2f(y, x) / M_PI);
+    return ((id + 360 + 360 / NUM_GESTURE_DIRECTIONS / 2) % 360 / (360 / NUM_GESTURE_DIRECTIONS)) % NUM_GESTURE_DIRECTIONS;
+}
+
+static void mode_colours_show(uint8_t mode) {
+    for (uint8_t i = 0; i < mode_count; i++) {
+        rgblight_set_layer_state(modes[i].colour, i == mode);
+    }
+}
+
+/* LED feedback while a knob holds the ball. Each state is written only when it
+   changes, so that the blinks and the release code keep control of the rest. */
+void mode_feedback_task(void) {
+    static bool pulse_shown   = false;
+    static bool preview_shown = false;
+
+    bool    started   = pointing_device_gestures_is_started();
+    uint8_t direction = started ? ball_direction() : NUM_GESTURE_DIRECTIONS;
+
+    /* A gesture: pulse white once a release would fire. */
+    bool pulse = started && !mode_pick_session && direction < NUM_GESTURE_DIRECTIONS && (timer_read() / GESTURE_PULSE_MS) % 2;
+    if (pulse != pulse_shown) {
+        rgblight_set_layer_state(GESTURE_PULSE_LAYER_COLOUR, pulse);
+        pulse_shown = pulse;
+    }
+
+    /* A pick: flash the colour of the mode the roll points at. The picker's
+       purple outranks the mode colours, so the flash turns it off, and turns
+       off the current mode's colour too, in case it outranks the target. */
+    uint8_t target  = direction < NUM_GESTURE_DIRECTIONS ? mode_pick_cells[direction] : MODE_NONE;
+    bool    preview = started && mode_pick_session && target < mode_count && timer_read() % (MODE_PICK_PREVIEW_LONG_MS + MODE_PICK_PREVIEW_SHORT_MS) >= MODE_PICK_PREVIEW_LONG_MS;
+    if (preview != preview_shown) {
+        if (preview) {
+            rgblight_set_layer_state(MODE_PICK_LAYER_COLOUR, false);
+            mode_colours_show(target);
+        } else {
+            /* A session that has ended has already turned the purple off. */
+            rgblight_set_layer_state(MODE_PICK_LAYER_COLOUR, started && mode_pick_session);
+            mode_colours_show(current_mode);
+        }
+        preview_shown = preview;
     }
 }

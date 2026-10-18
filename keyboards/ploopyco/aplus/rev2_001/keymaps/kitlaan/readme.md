@@ -144,7 +144,9 @@ mode gives one a different meaning. The gestures come from the `case`
 comments in `gestures.c`, and the picker from `mode_pick_cells`.
 
 The script stops with an error on a control that has no label, so a new
-keycode, layer or handler needs a tag before CI passes. Nothing checks that a
+keycode, layer or handler needs a tag before CI passes. CI runs it with
+`--strict`, which also fails on a colour it cannot find, and attaches the sheet
+to the branch release beside the `.uf2`. Nothing checks that a
 label is *true*. A `@doc(wheels)` tag on a layer is the weakest: the behaviour
 it describes is in `wheels.c`, far from the tag.
 

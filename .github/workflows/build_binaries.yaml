@@ -40,6 +40,32 @@ jobs:
           git -c safe.directory='*' -C qmk_firmware apply --whitespace=nowarn "$GITHUB_WORKSPACE/$p" || exit 1
         done
 
+  cheatsheet:
+    name: 'Keymap Cheat Sheets'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # A keymap's cheatsheet.py fails on a control with no label, so this
+      # also checks the labels on branches that do not publish. The stock HSV
+      # colours are in the firmware's color.h; one file at the pinned SHA is
+      # enough, so the submodule is not cloned.
+      - name: Generate
+        run: |
+          scripts=$(git ls-files 'keyboards/**/cheatsheet.py')
+          [ -n "$scripts" ] || exit 0
+          mkdir -p qmk_firmware/quantum
+          curl -sfL -o qmk_firmware/quantum/color.h \
+            "https://raw.githubusercontent.com/qmk/qmk_firmware/$(git rev-parse HEAD:qmk_firmware)/quantum/color.h"
+          for s in $scripts; do
+            echo "Running $s"
+            python3 "$s" --strict || exit 1
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Cheatsheets
+          path: '*_cheatsheet.html'
+          if-no-files-found: ignore
+
   publish:
     name: 'QMK Userspace Publish'
     # Our own job, not qmk_userspace_publish.yml: that one hard-codes the
@@ -48,12 +74,13 @@ jobs:
     # Without the ref check, a branch push replaces main's release. Other
     # branches publish to their own tag only when the RELEASE_BRANCHES repo
     # variable (a JSON list) names them, so feature branches only build.
-    # A failed build stops the release. With more than one target, a failed
-    # build can still upload the firmware of the others.
+    # A failed build or cheat sheet stops the release. With more than one
+    # target, a failed build can still upload the firmware of the others.
     if: >-
-      always() && !cancelled() && needs.targets.outputs.any == 'true' && needs.build.result == 'success' &&
+      always() && !cancelled() && needs.targets.outputs.any == 'true' &&
+      needs.build.result == 'success' && needs.cheatsheet.result == 'success' &&
       (github.ref == 'refs/heads/main' || contains(fromJSON(vars.RELEASE_BRANCHES || '[]'), github.ref_name))
-    needs: [build, targets]
+    needs: [build, targets, cheatsheet]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -74,6 +101,13 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: Firmware
+
+      # Absent on a branch with no cheat sheet, which is not an error.
+      - name: Download cheat sheets
+        uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: Cheatsheets
 
       - name: Delete release
         run: gh release delete "$TAG" --cleanup-tag || true
@@ -96,3 +130,4 @@ jobs:
             **/*.hex
             **/*.bin
             **/*.uf2
+            **/*_cheatsheet.html

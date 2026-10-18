@@ -109,6 +109,45 @@ is 15, because QMK resolves a key from the highest active layer and a mode is
 the default layer. The layer count is 16 so that those two never move as modes
 are added; see the comment on the layer enum.
 
+## Cheat sheet
+
+`cheatsheet.py` makes a printable sheet of what each control does: one page
+for each mode, plus control, gestures and the mode picker. It needs only
+Python, so it runs from this directory with no setup:
+
+```bash
+python3 cheatsheet.py
+```
+
+The labels come from `@doc` tags in the C source, beside the thing that they
+label:
+
+| Tag | Where | Labels |
+| --- | --- | --- |
+| `/* @doc: ... */` | after a member of `enum my_keycodes` | that keycode |
+| `/* @doc: ... */` | above a `.tap` handler | the right knob tap in that mode |
+| `/* @doc(detail): ... */` | above a keycode or a `.tap` handler | a second, smaller line under its label |
+| `/* @doc: ... */` | above a layer in `keymaps[]` | the page title |
+| `/* @doc(KEYCODE): ... */` | above a layer | that keycode, on that layer only |
+
+The wheels take the same three tags above a `.wheels` handler, for each mode
+that uses it, or above a layer, for that layer only. A layer tag wins over the
+handler's:
+
+| Tag | Labels |
+| --- | --- |
+| `/* @doc(wheels): ... */` | both wheels |
+| `/* @doc(wheel_left): ... */`, `/* @doc(wheel_right): ... */` | one wheel, over `@doc(wheels)` |
+
+Stock mouse buttons have labels built into the script. Use a layer tag when a
+mode gives one a different meaning. The gestures come from the `case`
+comments in `gestures.c`, and the picker from `mode_pick_cells`.
+
+The script stops with an error on a control that has no label, so a new
+keycode, layer or handler needs a tag before CI passes. Nothing checks that a
+label is *true*. A `@doc(wheels)` tag on a layer is the weakest: the behaviour
+it describes is in `wheels.c`, far from the tag.
+
 ## Files
 
 | File | Holds |
@@ -118,6 +157,7 @@ are added; see the comment on the layer enum.
 | `wheels.c` | the two TMAG5273 wheel sensors and all scroll processing |
 | `gestures.c` | the mouse gesture actions |
 | `kitlaan.h` | `user_config_t`, and the colour, keycode and layer enums |
+| `cheatsheet.py` | the cheat sheet generator; see above |
 
 `modes.c` keeps its own state private, so `keymap.c` reaches the knobs through
 `mode_process_record()`, `mode_scan()` and `mode_task()` rather than sharing

@@ -85,6 +85,8 @@ static bool wheel_past_deadzone(int16_t deadzone_distance) {
 
 /* Wheels for the base mode: the left one scrolls vertically and the right one
    horizontally, either optionally sent as arrow keys instead. */
+/* @doc(wheel_left): Vertical scroll */
+/* @doc(wheel_right): Horizontal scroll */
 void mode_wheels_default(wheel_input_t* in, report_mouse_t* report) {
     /* If scroll arrow mode is activated for horizontal scrolling, then we do that.
        This behaviour is the same across OSes. */

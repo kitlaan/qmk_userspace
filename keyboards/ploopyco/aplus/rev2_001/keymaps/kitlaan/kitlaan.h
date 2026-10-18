@@ -41,17 +41,24 @@ typedef union {
 
 extern user_config_t user_config;
 
-/* Add custom keycodes for control layer. */
+/* Add custom keycodes for control layer. The @doc tags label them in
+   cheatsheet.py, which fails on a keycode that has none. */
 enum my_keycodes {
-    PKC_TGL_VERT_SCRL = SAFE_RANGE,
-    PKC_TGL_HORIZ_SCRL,
-    PKC_TGL_DRAG_SCRL,
-    PKC_TGL_ACCEL,
-    PKC_GESTURE,
-    PKC_MODE,
-    PKC_DRAG_SCROLL,
-    PKC_ADJUST_LED_BRIGHTNESS,
-    PKC_BLINKY_DPI_CONFIG,
+    /* @doc(detail): Scroll events or up/down arrows. One long blink for arrows, two for scroll. */
+    PKC_TGL_VERT_SCRL = SAFE_RANGE, /* @doc: Vertical scroll type */
+    /* @doc(detail): Scroll events or left/right arrows. One long blink for arrows, two for scroll. */
+    PKC_TGL_HORIZ_SCRL, /* @doc: Horizontal scroll type */
+    /* @doc(detail): Hold or toggle. One long blink for toggle, two for hold. */
+    PKC_TGL_DRAG_SCRL, /* @doc: Drag scroll type */
+    /* @doc(detail): One long blink for on, two for off. A replug turns it back on. */
+    PKC_TGL_ACCEL,   /* @doc: Acceleration */
+    PKC_GESTURE,     /* @doc: Hold and roll for a gesture */
+    PKC_MODE,        /* @doc: Hold and roll to pick a mode */
+    PKC_DRAG_SCROLL, /* @doc: Drag scroll */
+    /* @doc(detail): Four steps, then back to the dimmest. */
+    PKC_ADJUST_LED_BRIGHTNESS, /* @doc: LED brightness */
+    /* @doc(detail): 600, 900, 1200, 1600, 2400. Blinks once per step: one for 600. */
+    PKC_BLINKY_DPI_CONFIG, /* @doc: Cycle DPI */
 };
 
 /* Layer names. Modes take the layers below LAYER_CONTROL and are selected as the

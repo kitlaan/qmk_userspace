@@ -21,3 +21,6 @@ compile_commands.json
 
 # direnv machine-specific overrides
 .envrc.local
+
+# Generated cheat sheets, published by CI
+*_cheatsheet.html

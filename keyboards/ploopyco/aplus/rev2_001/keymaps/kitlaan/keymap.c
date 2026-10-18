@@ -52,6 +52,7 @@ const rgblight_segment_t* const PROGMEM my_rgb_layers[] = RGBLIGHT_LAYERS_LIST(
 
 user_config_t user_config;
 
+/* @doc: Control layer */
 static void mode_tap_control(void) {
     layer_invert(LAYER_CONTROL);
 }
@@ -87,7 +88,10 @@ const uint16_t PROGMEM pointing_device_gestures[NUM_GESTURE_DIRECTIONS] =
 /* Keymap. */
 // clang-format off
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    // Base layer with all of the mouse-related stuff for everyday use.
+    /* Base layer with all of the mouse-related stuff for everyday use.
+       Tags before a layer feed cheatsheet.py: a title, and labels that differ
+       from the keycode's own. See the readme. */
+    /* @doc: Navigation */
     [LAYER_NAV_RIGHT_HANDED] = LAYOUT(  MS_BTN4, MS_BTN5, PKC_DRAG_SCROLL, MS_BTN2,
                                         MS_BTN1, MS_BTN3,
                                         PKC_GESTURE, PKC_MODE ),
@@ -108,12 +112,16 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [12] = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
     [13] = LAYOUT( _______, _______, _______, _______, _______, _______, _______, _______ ),
     // Layer for all of the customization options.
+    /* @doc: Control */
+    /* @doc(TG(LAYER_CONTROL)): Back to the mode */
+    /* @doc(wheels): Volume */
     [LAYER_CONTROL] = LAYOUT(           PKC_BLINKY_DPI_CONFIG, PKC_ADJUST_LED_BRIGHTNESS, PKC_TGL_VERT_SCRL, PKC_TGL_HORIZ_SCRL,
                                         PKC_TGL_ACCEL, PKC_TGL_DRAG_SCRL,
                                         TG(LAYER_CONTROL), TG(LAYER_CONTROL) ),
     /* Raised while either knob is held, so the buttons mean the same thing
        whichever knob you use. Both knobs stay transparent, so that a release
        still reaches the keycode that started the hold. */
+    /* @doc: Knob held */
     [LAYER_KNOB_HOLD] = LAYOUT(         XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
                                         XXXXXXX, XXXXXXX,
                                         _______, _______ )

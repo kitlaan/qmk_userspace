@@ -27,6 +27,7 @@ enum {
     GESTURE_LAYER_COLOUR,
     GESTURE_PULSE_LAYER_COLOUR,
     OPTION_CHANGED_LAYER_COLOUR,
+    LAYER_COLOUR_COUNT,
 };
 
 /* EEPROM memory for the various persistent states that the A+ can have.

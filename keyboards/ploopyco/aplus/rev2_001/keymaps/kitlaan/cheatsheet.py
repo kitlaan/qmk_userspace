@@ -360,6 +360,7 @@ def parse_colours(keymap_c, kitlaan_h):
     costs the page its tint.
     """
     enum = enum_values(kitlaan_h, "RIGHTY_NAV_LAYER_COLOUR", "kitlaan.h")
+    enum.pop("LAYER_COLOUR_COUNT", None)  # a count for keymap.c's assertion, not a colour
     order = split_args(strip_comments(re.search(r"RGBLIGHT_LAYERS_LIST\((.*?)\);", keymap_c, re.S).group(1)))
     segments = dict(re.findall(r"(\w+)\[\]\s*=\s*RGBLIGHT_LAYER_SEGMENTS\(\s*\{[^}]*?(HSV_\w+)\s*\}", keymap_c))
     defines = hsv_defines()

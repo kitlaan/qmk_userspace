@@ -56,6 +56,10 @@ const rgblight_segment_t* const PROGMEM my_rgb_layers[] = RGBLIGHT_LAYERS_LIST(
 );
 // clang-format on
 
+/* RGBLIGHT_LAYERS_LIST adds a NULL at the end. This catches a colour added to
+   only one of the two lists, but not two colours in a different order. */
+_Static_assert(sizeof(my_rgb_layers) / sizeof(my_rgb_layers[0]) - 1 == LAYER_COLOUR_COUNT, "my_rgb_layers[] and the colour enum in kitlaan.h must match.");
+
 user_config_t user_config;
 
 /* @doc: Control layer */

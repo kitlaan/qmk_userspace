@@ -34,6 +34,12 @@
 #define GESTURE_LINUX_DESKTOP_NEXT LGUI(KC_RIGHT)
 #define GESTURE_LINUX_DESKTOP_PREV LGUI(KC_LEFT)
 
+/* The gestures send different keys to each host OS. Some KVMs keep the board
+   powered when they switch hosts, so the board keeps the OS it found first.
+   This makes the board reset when the USB starts again, so that it finds the
+   new OS. A reset also loses the settings that are not in EEPROM. */
+// #define OS_DETECTION_KEYBOARD_RESET
+
 /* Mode picking rolls the ball while the right knob is held. Four directions
    uses the cardinal rolls only and blinks at a diagonal; eight uses them all. */
 #define MODE_PICK_DIRECTIONS 4
